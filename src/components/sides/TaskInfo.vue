@@ -88,6 +88,10 @@
               </router-link>
             </div>
           </div>
+          <div class="wekitsulink">
+            <!-- {{ task.id }} -->
+            <task-path-button :task-id="task.id" />
+          </div>
         </div>
 
         <div class="flexrow" v-if="showAssignees && task.assignees.length > 0">
@@ -375,6 +379,7 @@ import PeopleAvatar from '@/components/widgets/PeopleAvatar.vue'
 import PreviewPlayer from '@/components/previews/PreviewPlayer.vue'
 import Spinner from '@/components/widgets/Spinner.vue'
 import TaskTypeName from '@/components/widgets/TaskTypeName.vue'
+import TaskPathButton from '@/components/widgets/TaskPathButton.vue'
 
 const DEFAULT_PANEL_WIDTH = 400
 
@@ -397,6 +402,7 @@ export default {
     PreviewPlayer,
     Spinner,
     TaskTypeName,
+    TaskPathButton,
     XIcon
   },
 
