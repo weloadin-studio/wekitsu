@@ -45,6 +45,11 @@ export default defineConfig({
         target: process.env.KITSU_EVENT_TARGET || 'http://127.0.0.1:5001',
         changeOrigin: true,
         ws: true
+      },
+      '/wekitsu-api': {
+        target: process.env.WEKITSU_API_TARGET || 'http://127.0.0.1:5002',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/wekitsu-api/, '')
       }
     }
   },
