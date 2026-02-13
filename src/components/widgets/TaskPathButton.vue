@@ -51,7 +51,7 @@ export default {
       if (!id) return
       this.loading = true
       try {
-        const response = await fetch(`http://localhost:3000/get-task/${id}`)
+        const response = await fetch(`/wekitsu-api/get-task/${id}`)
         if (response.ok) {
           const data = await response.json()
           this.path = data.path || ''
@@ -87,7 +87,7 @@ export default {
       this.loading = true
       try {
         const response = await fetch(
-          'http://localhost:3000/create-task-folder',
+          '/wekitsu-api/create-task-folder',
           {
             method: 'POST',
             headers: {
