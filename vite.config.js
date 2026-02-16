@@ -49,8 +49,9 @@ export default defineConfig({
         ws: true
       },
       '/wekitsu-api': {
-        target: process.env.WEKITSU_API_TARGET || 'http://127.0.0.1:5002',
+        target: process.env.WEKITSU_API_TARGET || 'https://wekitsu-api.weloadin.lol',
         changeOrigin: true,
+        secure: false,
         rewrite: path => path.replace(/^\/wekitsu-api/, '')
       }
     }
