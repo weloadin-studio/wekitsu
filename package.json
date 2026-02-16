@@ -8,7 +8,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "format": "prettier --write --list-different src/**/*.{js,vue}",
     "lint": "eslint src/",
