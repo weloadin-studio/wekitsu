@@ -36,6 +36,7 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 8080,
     allowedHosts: true,
+    hmr: false,
     proxy: {
       '/api': {
         target: process.env.KITSU_API_TARGET || 'http://127.0.0.1:5000',
