@@ -17,9 +17,16 @@
         v-if="!minimized"
       >
         <template v-if="task">
-          <span class="tag" :title="taskStatus.name" :style="tagStyle">
-            {{ taskStatus.short_name }}
-          </span>
+          <div class="status-combo" @click.stop>
+            <combobox-status
+              v-model="taskStatusId"
+              :task-status-list="taskStatusList"
+              :narrow="true"
+              :with-margin="false"
+              :color-only="true"
+              @update:modelValue="onStatusChange"
+            />
+          </div>
           <span class="filler" v-if="contactSheet"></span>
           <span
             :class="{
@@ -82,6 +89,7 @@ import { EyeIcon } from 'lucide-vue-next'
 import colors from '@/lib/colors'
 import { sortPeople } from '@/lib/sorting'
 import { formatListMixin } from '@/components/mixins/format'
+import ComboboxStatus from '@/components/widgets/ComboboxStatus.vue'
 
 export default {
   name: 'validation-cell',
@@ -95,7 +103,8 @@ export default {
   },
 
   components: {
-    EyeIcon
+    EyeIcon,
+    ComboboxStatus
   },
 
   props: {
@@ -188,6 +197,7 @@ export default {
 
   computed: {
     ...mapGetters([
+      'getTaskStatusForCurrentUser',
       'isCurrentUserClient',
       'isDarkTheme',
       'personMap',
@@ -268,9 +278,23 @@ export default {
       }
     },
 
-    taskStatus() {
+    currentTaskStatus() {
       const taskStatusId = this.task?.task_status_id
       return this.taskStatusMap?.get(taskStatusId) || {}
+    },
+
+    taskStatusList() {
+      if (!this.task) return []
+      return this.getTaskStatusForCurrentUser(this.task.project_id, false)
+    },
+
+    taskStatusId: {
+      get() {
+        return this.task?.task_status_id || ''
+      },
+      set(value) {
+        // Handled by onStatusChange method
+      }
     }
   },
 
@@ -295,6 +319,20 @@ export default {
         isShiftKey: event.shiftKey,
         isUserClick: event.isUserClick !== false
       })
+    },
+
+    async onStatusChange(newStatusId) {
+      if (!this.task || newStatusId === this.task.task_status_id) {
+        return
+      }
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: this.task.id,
+          data: { task_status_id: newStatusId }
+        })
+      } catch (error) {
+        console.error('Failed to update task status:', error)
+      }
     }
   },
 
