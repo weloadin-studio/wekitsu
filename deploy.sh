@@ -3,8 +3,8 @@
 # Exit on any error
 set -e
 
-echo "🔄 Pulling latest changes from git..."
-git pull
+# echo "🔄 Pulling latest changes from git..."
+# git pull
 
 echo "🛑 Stopping existing containers..."
 docker compose down
