@@ -232,14 +232,14 @@ export default {
     },
 
     tagStyle() {
-      const isTodo = this.taskStatus.name === 'Todo'
+      const isTodo = this.currentTaskStatus.name === 'Todo'
       let backgroundColor
       if (isTodo) {
         backgroundColor = this.isDarkTheme ? '#5F626A' : '#ECECEC'
-      } else if (this.taskStatus.color) {
+      } else if (this.currentTaskStatus.color) {
         backgroundColor = this.isDarkTheme
-          ? colors.darkenColor(this.taskStatus.color)
-          : this.taskStatus.color
+          ? colors.darkenColor(this.currentTaskStatus.color)
+          : this.currentTaskStatus.color
       } else {
         backgroundColor = 'transparent'
       }
@@ -258,7 +258,7 @@ export default {
         '.png'
       return {
         'background-image': 'url(' + path + ')',
-        'background-color': this.taskStatus.color + '44',
+        'background-color': this.currentTaskStatus.color + '44',
         height: '100px',
         width: '150px',
         display: 'flex',
