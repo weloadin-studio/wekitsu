@@ -5,9 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      x-bake:
-        no-cache: false
-        provenance: false
     ports:
       - "8080:80"
     restart: unless-stopped
