@@ -74,7 +74,7 @@
           @click="$router.go(0)"
           v-if="!isCurrentUserClient"
         >
-          Reload this MOFO💦
+          Refresh ↻
         </a>
 
         <router-link
