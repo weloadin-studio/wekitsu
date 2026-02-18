@@ -57,45 +57,85 @@
               :task-id="task.id"
               v-if="getTaskType(task.id)"
             />
-            <td class="status">
-              <validation-tag
-                :task="getTask(task.id)"
-                :is-static="true"
+
+            <!-- Status: inline ComboboxStatus dropdown -->
+            <td class="status" @click.stop>
+              <combobox-status
                 v-if="getTask(task.id)"
+                :model-value="getTask(task.id).task_status_id"
+                :task-status-list="getTaskStatusList(task)"
+                :narrow="true"
+                :with-margin="false"
+                :color-only="true"
+                @update:modelValue="onStatusChange(task, $event)"
               />
             </td>
-            <td class="estimation">
-              {{ getTaskEstimation(task) }}
+
+            <!-- Estimation: inline number input -->
+            <td class="estimation" @click.stop>
+              <input
+                class="inline-input"
+                type="number"
+                min="0"
+                step="0.5"
+                :value="task.estimation || ''"
+                @change="onEstimationChange(task, $event.target.value)"
+                @click.stop
+              />
             </td>
-            <td class="duration">
-              {{ getTaskDuration(task) }}
+
+            <!-- Duration: inline number input -->
+            <td class="duration" @click.stop>
+              <input
+                class="inline-input"
+                type="number"
+                min="0"
+                step="0.5"
+                :value="task.duration || ''"
+                @change="onDurationChange(task, $event.target.value)"
+                @click.stop
+              />
             </td>
-            <td class="startdate">
-              {{ getTaskStartDate(task) }}
+
+            <!-- Start Date: inline DateField -->
+            <td class="startdate" @click.stop>
+              <date-field
+                :model-value="task.start_date || null"
+                :with-margin="false"
+                :can-delete="true"
+                :utc="true"
+                @update:modelValue="onStartDateChange(task, $event)"
+              />
             </td>
-            <td class="duedate">
-              {{ getTaskDueDate(task) }}
+
+            <!-- Due Date: inline DateField -->
+            <td class="duedate" @click.stop>
+              <date-field
+                :model-value="task.due_date || null"
+                :with-margin="false"
+                :can-delete="true"
+                :utc="true"
+                @update:modelValue="onDueDateChange(task, $event)"
+              />
             </td>
-            <td class="assignees">
+
+            <!-- Assignees: PeopleField multiselect -->
+            <td class="assignees" @click.stop>
               <div
-                class="flexrow"
+                class="assignees-cell"
                 v-if="!isCurrentUserClient && !isCurrentUserVendor"
               >
-                <div
-                  class="avatar-wrapper"
-                  :key="personId"
-                  v-for="personId in getAssignees(task)"
-                >
-                  <people-avatar
-                    class="person-avatar flexrow-item"
-                    :key="task.id + '-' + personId"
-                    :person="personMap.get(personId)"
-                    :size="30"
-                    :font-size="15"
-                  />
-                </div>
+                <people-field
+                  :multiple="true"
+                  :people="projectTeamPeople"
+                  :model-value="getAssigneeObjects(task)"
+                  :clearable="false"
+                  :small="true"
+                  @select="onAssigneesChange(task, $event)"
+                />
               </div>
             </td>
+
             <td class="end-cell"></td>
           </tr>
           <tr class="datatable-row total-row">
@@ -122,10 +162,12 @@ import { mapGetters } from 'vuex'
 
 import { formatListMixin } from '@/components/mixins/format'
 
+import ComboboxStatus from '@/components/widgets/ComboboxStatus.vue'
+import DateField from '@/components/widgets/DateField.vue'
 import PeopleAvatar from '@/components/widgets/PeopleAvatar.vue'
+import PeopleField from '@/components/widgets/PeopleField.vue'
 import TableInfo from '@/components/widgets/TableInfo.vue'
 import TaskTypeCell from '@/components/cells/TaskTypeCell.vue'
-import ValidationTag from '@/components/widgets/ValidationTag.vue'
 
 export default {
   name: 'entity-task-list',
@@ -133,10 +175,12 @@ export default {
   mixins: [formatListMixin],
 
   components: {
+    ComboboxStatus,
+    DateField,
     PeopleAvatar,
+    PeopleField,
     TableInfo,
-    TaskTypeCell,
-    ValidationTag
+    TaskTypeCell
   },
 
   props: {
@@ -164,7 +208,9 @@ export default {
 
   computed: {
     ...mapGetters([
+      'activePeople',
       'currentProduction',
+      'getTaskStatusForCurrentUser',
       'getTaskTypePriority',
       'isCurrentUserClient',
       'isCurrentUserVendor',
@@ -232,6 +278,11 @@ export default {
 
     entityAssignees() {
       return [...new Set(this.entries.flatMap(task => task.assignees))]
+    },
+
+    projectTeamPeople() {
+      const teamIds = new Set(this.currentProduction?.team || [])
+      return this.activePeople.filter(p => teamIds.has(p.id))
     }
   },
 
@@ -249,22 +300,6 @@ export default {
       }
     },
 
-    getTaskStartDate(task) {
-      return task && task.start_date ? task.start_date.substring(0, 10) : ''
-    },
-
-    getTaskDueDate(task) {
-      return task && task.due_date ? task.due_date.substring(0, 10) : ''
-    },
-
-    getTaskEstimation(task) {
-      return task && task.estimation ? this.formatDuration(task.estimation) : ''
-    },
-
-    getTaskDuration(task) {
-      return task && task.duration ? this.formatDuration(task.duration) : ''
-    },
-
     getTaskType(entry) {
       const task = this.getTask(entry)
       return task ? this.taskTypeMap.get(task.task_type_id) : null
@@ -273,6 +308,131 @@ export default {
     getAssignees(entry) {
       const task = this.getTask(entry)
       return task ? task.assignees : []
+    },
+
+    getAssigneeObjects(entry) {
+      const task = this.getTask(entry.id) || entry
+      if (!task || !task.assignees) return []
+      return task.assignees
+        .map(id => this.personMap.get(id))
+        .filter(Boolean)
+    },
+
+    getTaskStatusList(task) {
+      const fullTask = this.getTask(task.id) || task
+      if (!fullTask) return []
+      return this.getTaskStatusForCurrentUser(fullTask.project_id, false)
+    },
+
+    async onStatusChange(task, newStatusId) {
+      const fullTask = this.getTask(task.id) || task
+      if (!fullTask || newStatusId === fullTask.task_status_id) return
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: fullTask.id,
+          data: { task_status_id: newStatusId }
+        })
+      } catch (error) {
+        console.error('Failed to update task status:', error)
+      }
+    },
+
+    async onEstimationChange(task, value) {
+      const parsed = parseFloat(value)
+      const estimation = isNaN(parsed) ? 0 : parsed
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: task.id,
+          data: { estimation }
+        })
+      } catch (error) {
+        console.error('Failed to update estimation:', error)
+      }
+    },
+
+    async onDurationChange(task, value) {
+      const parsed = parseFloat(value)
+      const duration = isNaN(parsed) ? 0 : parsed
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: task.id,
+          data: { duration }
+        })
+      } catch (error) {
+        console.error('Failed to update duration:', error)
+      }
+    },
+
+    async onStartDateChange(task, value) {
+      let start_date = null
+      if (value) {
+        start_date = this.formatLocalDate(value)
+      }
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: task.id,
+          data: { start_date }
+        })
+      } catch (error) {
+        console.error('Failed to update start date:', error)
+      }
+    },
+
+    async onDueDateChange(task, value) {
+      let due_date = null
+      if (value) {
+        due_date = this.formatLocalDate(value)
+      }
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: task.id,
+          data: { due_date }
+        })
+      } catch (error) {
+        console.error('Failed to update due date:', error)
+      }
+    },
+
+    formatLocalDate(value) {
+      // Use local date parts to avoid UTC offset shifting the date
+      const d = value instanceof Date ? value : new Date(value)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
+    async onAssigneesChange(task, newPeopleArray) {
+      const fullTask = this.getTask(task.id) || task
+      if (!fullTask) return
+
+      // PeopleField with multiple=true emits the full current array.
+      // Diff old vs new to find who was added or removed.
+      const currentIds = new Set(fullTask.assignees || [])
+      const newIds = new Set((newPeopleArray || []).map(p => p.id))
+
+      const added = [...newIds].filter(id => !currentIds.has(id))
+      const removed = [...currentIds].filter(id => !newIds.has(id))
+
+      try {
+        for (const personId of added) {
+          await this.$store.dispatch('assignSelectedTasks', {
+            personId,
+            taskIds: [fullTask.id]
+          })
+        }
+        for (const personId of removed) {
+          const person = this.personMap.get(personId)
+          if (person) {
+            await this.$store.dispatch('unassignPersonFromTask', {
+              task: fullTask,
+              person
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update assignees:', error)
+      }
     },
 
     selectTask(task) {
@@ -289,7 +449,7 @@ export default {
 
 <style lang="scss" scoped>
 .data-list {
-  max-width: 500px;
+  max-width: 600px;
   margin-top: 0;
 
   .dark & {
@@ -304,15 +464,15 @@ export default {
 
 .estimation,
 .duration {
-  max-width: 50px;
-  min-width: 50px;
+  max-width: 70px;
+  min-width: 70px;
   text-align: right;
 }
 
 .startdate,
 .duedate {
-  max-width: 100px;
-  min-width: 100px;
+  max-width: 130px;
+  min-width: 130px;
   white-space: nowrap;
 }
 
@@ -322,8 +482,8 @@ export default {
 }
 
 .assignees {
-  max-width: 150px;
-  min-width: 150px;
+  max-width: 200px;
+  min-width: 200px;
 }
 
 .end-cell {
@@ -349,5 +509,36 @@ export default {
 .total-row {
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+}
+
+.inline-input {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: inherit;
+  font-size: inherit;
+  text-align: right;
+  width: 100%;
+  padding: 2px 4px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+
+  &:hover,
+  &:focus {
+    border-color: var(--border);
+    outline: none;
+    background: var(--background);
+  }
+}
+
+.assignees-cell {
+  width: 100%;
 }
 </style>
