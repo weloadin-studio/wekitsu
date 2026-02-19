@@ -8,15 +8,45 @@
     >
       {{ buttonText }}
     </button>
+    
+    <template v-if="path">
+      <button class="button ml-1" @click.stop="showSnapshotsModal = true">
+        {{ $t('task_path.snapshots', 'Snapshots') }}
+      </button>
+      <button class="button ml-1" @click.stop="showCreateSnapshotModal = true">
+        {{ $t('task_path.create_snapshot', 'Create Snapshot') }}
+      </button>
+    </template>
+
     <transition name="fade">
       <div v-if="showToast" class="toast-popup">Path copied!</div>
     </transition>
+
+    <snapshots-modal
+      :active="showSnapshotsModal"
+      :taskId="taskId"
+      @cancel="showSnapshotsModal = false"
+    />
+
+    <create-snapshot-modal
+      :active="showCreateSnapshotModal"
+      :taskId="taskId"
+      @cancel="showCreateSnapshotModal = false"
+      @confirm="onSnapshotCreated"
+    />
   </div>
 </template>
 
 <script>
+import SnapshotsModal from '@/components/modals/SnapshotsModal.vue'
+import CreateSnapshotModal from '@/components/modals/CreateSnapshotModal.vue'
+
 export default {
   name: 'task-path-button',
+  components: {
+    SnapshotsModal,
+    CreateSnapshotModal
+  },
   props: {
     taskId: {
       type: String,
@@ -27,7 +57,9 @@ export default {
     return {
       path: '',
       loading: false,
-      showToast: false
+      showToast: false,
+      showSnapshotsModal: false,
+      showCreateSnapshotModal: false
     }
   },
   computed: {
@@ -110,6 +142,11 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    onSnapshotCreated() {
+      this.showCreateSnapshotModal = false
+      // Optionally open the snapshots list to show the new one
+      this.showSnapshotsModal = true
     }
   }
 }
@@ -119,6 +156,10 @@ export default {
 .task-path-button-wrapper {
   position: relative;
   display: inline-block;
+}
+
+.button.ml-1 {
+  margin-left: 0.5rem;
 }
 
 .toast-popup {
