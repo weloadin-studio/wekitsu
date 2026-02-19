@@ -9,24 +9,41 @@
 
     <div class="modal-content">
       <div class="box content">
-        <h1 class="title">
-          {{ $t('snapshots.title', 'Snapshots') }}
-        </h1>
+        <div class="columns is-vcentered mb-4">
+          <div class="column">
+            <h3 class="title is-4">
+              {{ $t('snapshots.title', 'Snapshots') }}
+            </h3>
+          </div>
+          <div class="column is-narrow">
+            <div class="select">
+              <select v-model="filterType">
+                <option value="all">{{ $t('main.all', 'All') }}</option>
+                <option value="source">Source</option>
+                <option value="export">Exports</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-        <div class="table-container">
-          <table class="table is-fullwidth">
-            <thead>
+        <div class="datatable-wrapper" ref="scrollBody">
+          <table class="datatable is-fullwidth">
+            <thead class="datatable-head">
               <tr>
-                <th class="thumbnail">{{ $t('snapshots.thumbnail', 'Thumbnail') }}</th>
-                <th class="date">{{ $t('snapshots.created_at', 'Created At') }}</th>
-                <th class="type">{{ $t('snapshots.type', 'Type') }}</th>
-                <th class="message">{{ $t('snapshots.message', 'Message') }}</th>
-                <th class="action">{{ $t('snapshots.download', 'Download') }}</th>
+                <th class="thumbnail datatable-row-header">{{ $t('snapshots.thumbnail', 'Thumbnail') }}</th>
+                <th class="date datatable-row-header">{{ $t('snapshots.created_at', 'Created At') }}</th>
+                <th class="type datatable-row-header">{{ $t('snapshots.type', 'Type') }}</th>
+                <th class="message datatable-row-header">{{ $t('snapshots.message', 'Message') }}</th>
+                <th class="action datatable-row-header">{{ $t('snapshots.download', 'Download') }}</th>
               </tr>
             </thead>
-            <tbody ref="scrollBody" @scroll="onScroll" class="scroll-body">
-              <tr v-for="snapshot in snapshots" :key="snapshot.commitId">
-                <td class="thumbnail">
+            <tbody class="datatable-body">
+              <tr 
+                v-for="snapshot in filteredSnapshots" 
+                :key="snapshot.commitId"
+                class="datatable-row"
+              >
+                <td class="thumbnail datatable-row-header">
                   <img
                     v-if="snapshot.thumbnailUrl"
                     :src="snapshot.thumbnailUrl"
@@ -37,16 +54,16 @@
                     <icon-image />
                   </div>
                 </td>
-                <td class="date">
+                <td class="date datatable-row-header">
                   {{ formatDate(snapshot.createdAt) }}
                 </td>
-                <td class="type">
+                <td class="type datatable-row-header">
                   <span class="tag">{{ snapshot.type }}</span>
                 </td>
-                <td class="message">
+                <td class="message datatable-row-header">
                   {{ snapshot.message }}
                 </td>
-                <td class="action">
+                <td class="action datatable-row-header">
                   <a
                     v-if="snapshot.zipUrl"
                     :href="snapshot.zipUrl"
@@ -63,7 +80,7 @@
                   {{ $t('main.loading', 'Loading...') }}
                 </td>
               </tr>
-              <tr v-if="!isLoading && snapshots.length === 0">
+              <tr v-if="!isLoading && filteredSnapshots.length === 0">
                 <td colspan="5" class="has-text-centered">
                   {{ $t('snapshots.no_snapshots', 'No snapshots found.') }}
                 </td>
@@ -72,7 +89,7 @@
           </table>
         </div>
 
-        <div class="has-text-right modal-footer">
+        <div class="has-text-right modal-footer mt-4">
           <button @click="$emit('cancel')" class="button">
             {{ $t('main.close', 'Close') }}
           </button>
@@ -115,8 +132,30 @@ export default {
       snapshots: [],
       isLoading: false,
       isError: false,
-      page: 1,
-      hasMore: true
+      filterType: 'all'
+    }
+  },
+
+  computed: {
+    filteredSnapshots() {
+      if (this.filterType === 'all') {
+        return this.snapshots
+      }
+      // Handle "exports" needing to match singular "export" in data if inconsistent,
+      // strictly user asked for "export" and "exports". API returns "exports" for type export
+      // based on curl output: "type": "exports".
+      // But user said: "when source is selected it, only the snapshots with type 'source' should show up, the same goes for 'exports'"
+      // My dropdown has values: 'source', 'export'.
+      // If API returns 'exports' (plural) and dropdown is 'export' (singular) or 'exports' (plural), need to match.
+      // Easiest is to loosely match check.
+      return this.snapshots.filter(s => {
+          if (this.filterType === 'all') return true
+          // If dropdown is 'export' and data is 'exports' or vice versa
+          if (this.filterType === 'export' || this.filterType === 'exports') {
+             return s.type === 'export' || s.type === 'exports'
+          }
+          return s.type === this.filterType
+      })
     }
   },
 
@@ -125,36 +164,28 @@ export default {
       return formatDate(dateString)
     },
 
-    async loadSnapshots(reset = false) {
-      if (this.isLoading || (!this.hasMore && !reset)) return
-      
-      if (reset) {
-        this.page = 1
-        this.snapshots = []
-        this.hasMore = true
-      }
-
+    async loadSnapshots() {
       this.isLoading = true
       this.isError = false
+      this.snapshots = []
+
+      // Client-side filtering only, load everything once.
+      // API does not seem to support pagination either based on "forget about pagination"
+      const url = `/wekitsu-api/snapshots/${this.taskId}`
 
       try {
-        const response = await fetch(
-          `/wekitsu-api/snapshots/${this.taskId}?page=${this.page}&limit=20`
-        )
+        const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
           if (data && Array.isArray(data)) {
-            if (data.length < 20) {
-              this.hasMore = false
-            }
-            this.snapshots = [...this.snapshots, ...data]
-            this.page++
-          } else {
-            this.hasMore = false
+            this.snapshots = data
           }
         } else {
-          this.isError = true
-          console.error('Failed to load snapshots')
+          // If 404, just empty list
+          if (response.status !== 404) {
+             console.error('Failed to load snapshots')
+             this.isError = true
+          }
         }
       } catch (e) {
         console.error('Error loading snapshots:', e)
@@ -164,19 +195,11 @@ export default {
       }
     },
 
-    onScroll(e) {
-      const { scrollTop, clientHeight, scrollHeight } = e.target
-      if (scrollHeight - scrollTop <= clientHeight + 50) {
-        this.loadSnapshots()
-      }
-    },
-
     reset() {
       this.snapshots = []
-      this.page = 1
-      this.hasMore = true
       this.isLoading = false
       this.isError = false
+      this.filterType = 'all'
     }
   },
 
@@ -184,48 +207,44 @@ export default {
     active(newVal) {
       if (newVal) {
         this.reset()
-        this.loadSnapshots(true)
+        this.loadSnapshots()
       }
     }
   }
 }
 </script>
 
+
 <style lang="scss" scoped>
 .modal-content {
-  width: 960px;
-  max-width: 90vw;
+  width: 80%;
+  max-width: 80%;
 }
 
-.table-container {
+.datatable-wrapper {
   max-height: 60vh;
-  overflow-y: hidden; /* Scroll happen in tbody */
-  display: flex;
-  flex-direction: column;
-}
-
-table {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-thead {
-  flex: 0 0 auto;
-}
-
-tbody.scroll-body {
-  flex: 1 1 auto;
-  display: block;
   overflow-y: auto;
-  max-height: 50vh;
-  width: 100%;
+  border: 1px solid #dbdbdb;
+  border-radius: 4px;
 }
 
-tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+.datatable {
+  margin-bottom: 0;
+}
+
+.datatable-head th {
+  position: sticky;
+  top: 0;
+  background: white; /* Ensure header is opaque */
+  z-index: 10;
+  box-shadow: 0 1px 0 #dbdbdb;
+}
+
+/* Dark mode support for sticky header */
+:global(.dark) .datatable-head th {
+  background: #2f3136; /* Adjust based on your dark theme */
+  color: #b9bbbe;
+  box-shadow: 0 1px 0 #40444b;
 }
 
 .thumbnail {
@@ -234,12 +253,15 @@ tr {
 }
 
 .date {
-  width: 150px;
+  width: 180px;
 }
 
 .type {
-  width: 100px;
+  width: 120px;
 }
+
+
+
 
 .action {
   width: 100px;
@@ -250,16 +272,33 @@ tr {
   max-width: 60px;
   max-height: 60px;
   border-radius: 4px;
+  object-fit: cover;
 }
 
 .placeholder-thumb {
   width: 60px;
   height: 60px;
-  background: #eee;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  color: #aaa;
+  color: #ccc;
+  margin: 0 auto;
 }
+
+:global(.dark) .placeholder-thumb {
+  background: #40444b;
+  color: #72767d;
+}
+
+.modal-footer {
+  border-top: 1px solid #dbdbdb;
+  padding-top: 1rem;
+}
+
+:global(.dark) .modal-footer {
+  border-top-color: #40444b;
+}
+
 </style>
