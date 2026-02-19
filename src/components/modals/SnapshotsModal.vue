@@ -35,6 +35,8 @@
                 <th class="type datatable-row-header">{{ $t('snapshots.type', 'Type') }}</th>
                 <th class="message datatable-row-header">{{ $t('snapshots.message', 'Message') }}</th>
                 <th class="action datatable-row-header">{{ $t('snapshots.download', 'Download') }}</th>
+                <th class="action datatable-row-header">{{ $t('snapshots.rollback', 'Rollback') }}</th>
+                <th class="action datatable-row-header">{{ $t('snapshots.delete', 'Delete') }}</th>
               </tr>
             </thead>
             <tbody class="datatable-body">
@@ -74,14 +76,30 @@
                     <icon-download />
                   </a>
                 </td>
+                <td class="action datatable-row-header">
+                  <button
+                     class="button is-small is-warning"
+                     @click="confirmRollback(snapshot)"
+                  >
+                    <icon-rotate-ccw />
+                  </button>
+                </td>
+                <td class="action datatable-row-header">
+                  <button
+                     class="button is-small is-danger"
+                     @click="confirmDelete(snapshot)"
+                  >
+                    <icon-trash />
+                  </button>
+                </td>
               </tr>
               <tr v-if="isLoading">
-                <td colspan="5" class="has-text-centered">
+                <td colspan="7" class="has-text-centered">
                   {{ $t('main.loading', 'Loading...') }}
                 </td>
               </tr>
               <tr v-if="!isLoading && filteredSnapshots.length === 0">
-                <td colspan="5" class="has-text-centered">
+                <td colspan="7" class="has-text-centered">
                   {{ $t('snapshots.no_snapshots', 'No snapshots found.') }}
                 </td>
               </tr>
@@ -96,13 +114,28 @@
         </div>
       </div>
     </div>
+    
+    <confirm-modal
+      :active="showConfirm"
+      :text="confirmText"
+      :confirmButtonText="confirmButtonText"
+      :isLoading="isActionLoading"
+      @cancel="cancelAction"
+      @confirm="performAction"
+    />
   </div>
 </template>
 
 <script>
 import { modalMixin } from '@/components/modals/base_modal'
+import ConfirmModal from '@/components/modals/ConfirmModal.vue'
 import { formatDate } from '@/lib/time'
-import { Download as IconDownload, Image as IconImage } from 'lucide-vue-next'
+import { 
+  Download as IconDownload, 
+  Image as IconImage,
+  Trash2 as IconTrash,
+  RotateCcw as IconRotateCcw
+} from 'lucide-vue-next'
 
 export default {
   name: 'snapshots-modal',
@@ -110,8 +143,11 @@ export default {
   mixins: [modalMixin],
 
   components: {
+    ConfirmModal,
     IconDownload,
-    IconImage
+    IconImage,
+    IconTrash,
+    IconRotateCcw
   },
 
   props: {
@@ -132,7 +168,14 @@ export default {
       snapshots: [],
       isLoading: false,
       isError: false,
-      filterType: 'all'
+      filterType: 'all',
+
+      // Confirm Modal State
+      showConfirm: false,
+      confirmText: '',
+      confirmButtonText: '',
+      isActionLoading: false,
+      pendingAction: null
     }
   },
 
@@ -160,6 +203,59 @@ export default {
   },
 
   methods: {
+    confirmDelete(snapshot) {
+      this.pendingAction = { type: 'delete', snapshot }
+      this.confirmText = this.$t('snapshots.confirm_delete', 'Are you sure you want to delete this snapshot?')
+      this.confirmButtonText = this.$t('main.delete', 'Delete')
+      this.showConfirm = true
+    },
+
+    confirmRollback(snapshot) {
+      this.pendingAction = { type: 'rollback', snapshot }
+      this.confirmText = this.$t('snapshots.confirm_rollback', 'Are you sure you want to rollback to this snapshot? Current state will be lost.')
+      this.confirmButtonText = this.$t('snapshots.rollback', 'Rollback')
+      this.showConfirm = true
+    },
+
+    cancelAction() {
+      this.showConfirm = false
+      this.pendingAction = null
+      this.isActionLoading = false
+    },
+
+    async performAction() {
+      if (!this.pendingAction) return
+
+      this.isActionLoading = true
+      const { type, snapshot } = this.pendingAction
+      const { commitId } = snapshot
+
+      try {
+        let url, method
+        if (type === 'delete') {
+          url = `/wekitsu-api/snapshots/${this.taskId}/${commitId}`
+          method = 'DELETE'
+        } else if (type === 'rollback') {
+          url = `/wekitsu-api/snapshots/${this.taskId}/${commitId}/rollback`
+          method = 'POST'
+        }
+
+        const response = await fetch(url, { method })
+        
+        if (response.ok) {
+          this.showConfirm = false
+          this.pendingAction = null
+          await this.loadSnapshots()
+        } else {
+          console.error(`Failed to ${type} snapshot`)
+        }
+      } catch (e) {
+        console.error(`Error during ${type}:`, e)
+      } finally {
+        this.isActionLoading = false
+      }
+    },
+
     formatDate(dateString) {
       return formatDate(dateString)
     },
@@ -200,6 +296,7 @@ export default {
       this.isLoading = false
       this.isError = false
       this.filterType = 'all'
+      this.cancelAction()
     }
   },
 
