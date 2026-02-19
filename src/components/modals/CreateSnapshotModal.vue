@@ -19,7 +19,7 @@
             <div class="select is-fullwidth">
               <select v-model="form.type">
                 <option value="source">Source</option>
-                <option value="export">Export</option>
+                <option value="exports">Exports</option>
               </select>
             </div>
           </div>
