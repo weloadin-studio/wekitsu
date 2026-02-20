@@ -10,6 +10,10 @@
     </button>
     
     <template v-if="path">
+      <button class="button ml-1 icon-button" title="Workspace Status" @click.stop="syncWorkspace">
+        <RefreshCwIcon v-if="workspaceStatus" class="icon is-small" size="16" />
+        <UnlinkIcon v-else class="icon is-small" size="16" />
+      </button>
       <button class="button ml-1" @click.stop="showSnapshotsModal = true">
         {{ $t('task_path.snapshots', 'Snapshots') }}
       </button>
@@ -40,12 +44,15 @@
 <script>
 import SnapshotsModal from '@/components/modals/SnapshotsModal.vue'
 import CreateSnapshotModal from '@/components/modals/CreateSnapshotModal.vue'
+import { RefreshCwIcon, UnlinkIcon } from 'lucide-vue-next'
 
 export default {
   name: 'task-path-button',
   components: {
     SnapshotsModal,
-    CreateSnapshotModal
+    CreateSnapshotModal,
+    RefreshCwIcon,
+    UnlinkIcon
   },
   props: {
     taskId: {
@@ -59,7 +66,8 @@ export default {
       loading: false,
       showToast: false,
       showSnapshotsModal: false,
-      showCreateSnapshotModal: false
+      showCreateSnapshotModal: false,
+      workspaceStatus: false
     }
   },
   computed: {
@@ -74,6 +82,21 @@ export default {
       handler(newId) {
         if (newId) {
           this.fetchPath(newId)
+        }
+      }
+    },
+    path: {
+      immediate: true,
+      async handler(newPath) {
+        if (newPath && window.electronAPI && window.electronAPI.checkWorkspacePath) {
+          try {
+            this.workspaceStatus = await window.electronAPI.checkWorkspacePath(newPath)
+          } catch (err) {
+            console.error('Failed to check workspace path:', err)
+            this.workspaceStatus = false
+          }
+        } else {
+          this.workspaceStatus = false
         }
       }
     }
@@ -147,6 +170,15 @@ export default {
       this.showCreateSnapshotModal = false
       // Optionally open the snapshots list to show the new one
       this.showSnapshotsModal = true
+    },
+    async syncWorkspace() {
+      if (this.path && window.electronAPI && window.electronAPI.syncFromServer) {
+        try {
+          await window.electronAPI.syncFromServer(this.path)
+        } catch (err) {
+          console.error('Failed to sync from server:', err)
+        }
+      }
     }
   }
 }
@@ -160,6 +192,13 @@ export default {
 
 .button.ml-1 {
   margin-left: 0.5rem;
+}
+
+.icon-button {
+  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toast-popup {
