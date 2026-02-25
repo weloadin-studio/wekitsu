@@ -1,5 +1,10 @@
 <template>
   <div class="task-path-button-wrapper">
+    <button v-if="path" class="button mr-1 icon-button" title="Workspace Status" @click.stop="syncWorkspace">
+      <RefreshCwIcon v-if="workspaceStatus" class="icon is-small" size="16" />
+      <UnlinkIcon v-else class="icon is-small" size="16" />
+    </button>
+    
     <button
       class="button"
       :class="{ 'is-loading': loading }"
@@ -10,10 +15,6 @@
     </button>
     
     <template v-if="path">
-      <button class="button ml-1 icon-button" title="Workspace Status" @click.stop="syncWorkspace">
-        <RefreshCwIcon v-if="workspaceStatus" class="icon is-small" size="16" />
-        <UnlinkIcon v-else class="icon is-small" size="16" />
-      </button>
       <button class="button ml-1" @click.stop="showSnapshotsModal = true">
         {{ $t('task_path.snapshots', 'Snapshots') }}
       </button>
@@ -106,10 +107,13 @@ export default {
       if (!id) return
       this.loading = true
       try {
-        const response = await fetch(`/wekitsu-api/get-task/${id}`)
-        if (response.ok) {
-          const data = await response.json()
-          this.path = data.path || ''
+        if (window.electronAPI && window.electronAPI.getTask) {
+          const response = await window.electronAPI.getTask(id)
+          if (response.success && response.data) {
+            this.path = response.data.path || ''
+          } else {
+            this.path = ''
+          }
         } else {
           this.path = ''
         }
@@ -141,24 +145,22 @@ export default {
 
       this.loading = true
       try {
-        const response = await fetch(
-          '/wekitsu-api/create-task-folder',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: this.taskId })
-          }
-        )
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data && data.path) {
-            this.path = data.path
+        if (window.electronAPI && window.electronAPI.createAsset) {
+          const response = await window.electronAPI.createAsset({ id: this.taskId })
+          
+          if (response.success && response.data) {
+            // The API returns the wekitsu_tasks record which has `path`
+            if (response.data.path) {
+              this.path = response.data.path
+            } else {
+              // Fallback in case path isn't directly on data, fetch it
+              await this.fetchPath(this.taskId)
+            }
+          } else {
+            console.error('Failed to create task folder')
           }
         } else {
-          console.error('Failed to create task folder')
+           console.error('Failed to create task folder: electronAPI not available')
         }
       } catch (e) {
         console.error('Error creating task folder:', e)

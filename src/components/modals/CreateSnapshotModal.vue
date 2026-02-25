@@ -149,30 +149,40 @@ export default {
       this.isError = false
       
       try {
-        const formData = new FormData()
-        formData.append('taskId', this.taskId)
-        formData.append('type', this.form.type)
-        formData.append('message', this.form.message)
-        
-        if (this.form.thumbnail) {
-          formData.append('thumbnail', this.form.thumbnail)
-        }
-        
-        if (this.form.preview) {
-          formData.append('preview', this.form.preview)
-        }
+        if (window.electronAPI && window.electronAPI.submitSnapshot) {
+          // send formData? IPC cannot serialize FormData natively. Wait, looking at main.cts it looks like
+          // `api-snapshot` expects an object payload:
+          // payload: { taskId, type, message, username, userId, bypassZip, thumbnailPath, previewPath }
+          // But File objects from FileUpload have paths in Electron.
+          
+          let thumbnailPath = null
+          let previewPath = null
+          
+          if (this.form.thumbnail && this.form.thumbnail.path) {
+            thumbnailPath = this.form.thumbnail.path
+          }
+          if (this.form.preview && this.form.preview.path) {
+            previewPath = this.form.preview.path
+          }
 
-        const response = await fetch('/wekitsu-api/snapshot', {
-          method: 'POST',
-          body: formData
-        })
+          const response = await window.electronAPI.submitSnapshot({
+            taskId: this.taskId,
+            type: this.form.type,
+            message: this.form.message,
+            thumbnailPath,
+            previewPath
+          })
 
-        if (response.ok) {
-          this.$emit('confirm')
-          this.reset()
+          if (response && response.success) {
+            this.$emit('confirm')
+            this.reset()
+          } else {
+            this.isError = true
+            console.error('Snapshot creation failed:', response?.error)
+          }
         } else {
+          console.error('electronAPI.submitSnapshot is not available')
           this.isError = true
-          console.error('Snapshot creation failed')
         }
       } catch (e) {
         console.error('Error creating snapshot:', e)

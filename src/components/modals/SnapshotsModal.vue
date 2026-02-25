@@ -231,23 +231,23 @@ export default {
       const { commitId } = snapshot
 
       try {
-        let url, method
+        let response
         if (type === 'delete') {
-          url = `/wekitsu-api/snapshots/${this.taskId}/${commitId}`
-          method = 'DELETE'
+          if (window.electronAPI && window.electronAPI.deleteSnapshot) {
+             response = await window.electronAPI.deleteSnapshot(this.taskId, commitId)
+          }
         } else if (type === 'rollback') {
-          url = `/wekitsu-api/snapshots/${this.taskId}/${commitId}/rollback`
-          method = 'POST'
+          if (window.electronAPI && window.electronAPI.rollbackSnapshot) {
+             response = await window.electronAPI.rollbackSnapshot(this.taskId, commitId)
+          }
         }
 
-        const response = await fetch(url, { method })
-        
-        if (response.ok) {
+        if (response && response.success) {
           this.showConfirm = false
           this.pendingAction = null
           await this.loadSnapshots()
         } else {
-          console.error(`Failed to ${type} snapshot`)
+          console.error(`Failed to ${type} snapshot`, response?.error)
         }
       } catch (e) {
         console.error(`Error during ${type}:`, e)
@@ -270,17 +270,18 @@ export default {
       const url = `/wekitsu-api/snapshots/${this.taskId}`
 
       try {
-        const response = await fetch(url)
-        if (response.ok) {
-          const data = await response.json()
-          if (data && Array.isArray(data)) {
-            this.snapshots = data
-          }
-        } else {
-          // If 404, just empty list
-          if (response.status !== 404) {
-             console.error('Failed to load snapshots')
-             this.isError = true
+        if (window.electronAPI && window.electronAPI.getSnapshots) {
+          const response = await window.electronAPI.getSnapshots(this.taskId)
+          if (response.success) {
+            if (response.data && Array.isArray(response.data)) {
+              this.snapshots = response.data
+            }
+          } else {
+             // If not found, just empty list
+             if (response.status !== 404) {
+               console.error('Failed to load snapshots:', response.error)
+               this.isError = true
+             }
           }
         }
       } catch (e) {
