@@ -1,8 +1,8 @@
 <template>
   <div class="task-path-button-wrapper">
-    <button v-if="path" class="button mr-1 icon-button" title="Workspace Status" @click.stop="syncWorkspace">
-      <RefreshCwIcon v-if="workspaceStatus" class="icon is-small" size="16" />
-      <UnlinkIcon v-else class="icon is-small" size="16" />
+    <button v-if="path" class="button mr-1 icon-button" :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'" @click.stop="toggleWorkspaceLink">
+      <UnlinkIcon v-if="workspaceStatus" class="icon is-small" size="16" />
+      <LinkIcon v-else class="icon is-small" size="16" />
     </button>
     
     <button
@@ -45,7 +45,7 @@
 <script>
 import SnapshotsModal from '@/components/modals/SnapshotsModal.vue'
 import CreateSnapshotModal from '@/components/modals/CreateSnapshotModal.vue'
-import { RefreshCwIcon, UnlinkIcon } from 'lucide-vue-next'
+import { RefreshCwIcon, UnlinkIcon, LinkIcon } from 'lucide-vue-next'
 
 export default {
   name: 'task-path-button',
@@ -53,12 +53,18 @@ export default {
     SnapshotsModal,
     CreateSnapshotModal,
     RefreshCwIcon,
-    UnlinkIcon
+    UnlinkIcon,
+    LinkIcon
   },
   props: {
     taskId: {
       type: String,
       required: true
+    },
+    assetType: {
+      type: String,
+      required: false,
+      default: ''
     }
   },
   data() {
@@ -146,7 +152,10 @@ export default {
       this.loading = true
       try {
         if (window.electronAPI && window.electronAPI.createAsset) {
-          const response = await window.electronAPI.createAsset({ id: this.taskId })
+          const response = await window.electronAPI.createAsset({ 
+            id: this.taskId,
+            assetType: this.assetType
+          })
           
           if (response.success && response.data) {
             // The API returns the wekitsu_tasks record which has `path`
@@ -173,13 +182,28 @@ export default {
       // Optionally open the snapshots list to show the new one
       this.showSnapshotsModal = true
     },
-    async syncWorkspace() {
-      if (this.path && window.electronAPI && window.electronAPI.syncFromServer) {
-        try {
-          await window.electronAPI.syncFromServer(this.path)
-        } catch (err) {
-          console.error('Failed to sync from server:', err)
+    async toggleWorkspaceLink() {
+      if (!this.path || !window.electronAPI) return;
+      
+      this.loading = true;
+      try {
+        if (this.workspaceStatus) {
+          if (window.electronAPI.unlinkFromWorkspace) {
+            await window.electronAPI.unlinkFromWorkspace(this.path);
+          }
+        } else {
+          if (window.electronAPI.linkToWorkspace) {
+            await window.electronAPI.linkToWorkspace(this.taskId, this.path);
+          }
         }
+        
+        if (window.electronAPI.checkWorkspacePath) {
+          this.workspaceStatus = await window.electronAPI.checkWorkspacePath(this.path);
+        }
+      } catch (err) {
+        console.error('Failed to toggle workspace link:', err);
+      } finally {
+        this.loading = false;
       }
     }
   }

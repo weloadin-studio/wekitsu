@@ -90,7 +90,7 @@
           </div>
           <div class="wekitsulink">
             <!-- {{ task.id }} -->
-            <task-path-button :task-id="task.id" />
+            <task-path-button :task-id="task.id" :asset-type="task.entity_type_name" />
           </div>
         </div>
 
