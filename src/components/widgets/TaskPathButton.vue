@@ -1,6 +1,12 @@
 <template>
   <div class="task-path-button-wrapper">
-    <button v-if="path" class="button mr-1 icon-button" :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'" @click.stop="toggleWorkspaceLink">
+    <button 
+      v-if="path" 
+      class="button mr-1 icon-button" 
+      :class="workspaceStatus ? 'is-linked-btn' : 'is-unlinked-btn'"
+      :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'" 
+      @click.stop="toggleWorkspaceLink"
+    >
       <UnlinkIcon v-if="workspaceStatus" class="icon is-small" size="16" />
       <LinkIcon v-else class="icon is-small" size="16" />
     </button>
@@ -9,7 +15,7 @@
       class="button"
       :class="{ 'is-loading': loading }"
       @click.stop="handleClick"
-      :disabled="loading"
+      :disabled="loading || (!!path && !workspaceStatus)"
     >
       {{ buttonText }}
     </button>
@@ -189,11 +195,23 @@ export default {
       try {
         if (this.workspaceStatus) {
           if (window.electronAPI.unlinkFromWorkspace) {
-            await window.electronAPI.unlinkFromWorkspace(this.path);
+            const res = await window.electronAPI.unlinkFromWorkspace(this.taskId, this.path);
+            if (!res.success) {
+              if (!res.cancelled && res.error) {
+                alert(`Failed to unlink workspace:\n${res.error}`);
+              }
+              return; // Do not update status
+            }
           }
         } else {
           if (window.electronAPI.linkToWorkspace) {
-            await window.electronAPI.linkToWorkspace(this.taskId, this.path);
+            const res = await window.electronAPI.linkToWorkspace(this.taskId, this.path);
+            if (!res.success) {
+              if (!res.cancelled && res.error) {
+                alert(`Failed to link workspace:\n${res.error}`);
+              }
+              return; // Do not update status
+            }
           }
         }
         
@@ -211,6 +229,22 @@ export default {
 </script>
 
 <style scoped>
+.wekitsu-path {
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.is-linked-btn {
+  background-color: #48c774 !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+.is-unlinked-btn {
+  background-color: #dbdbdb !important;
+  color: #363636 !important;
+  border-color: transparent !important;
+}
 .task-path-button-wrapper {
   position: relative;
   display: inline-block;
