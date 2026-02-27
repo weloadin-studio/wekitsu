@@ -2,7 +2,7 @@
   <div class="task-path-button-wrapper">
     <button 
       v-if="path" 
-      class="button mr-1 icon-button" 
+      class="button icon-button" 
       :class="workspaceStatus ? 'is-linked-btn' : 'is-unlinked-btn'"
       :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'" 
       @click.stop="toggleWorkspaceLink"
@@ -12,20 +12,22 @@
     </button>
     
     <button
-      class="button"
+      class="button icon-button"
       :class="{ 'is-loading': loading }"
+      :title="path ? 'Open Folder' : 'Create Folder'"
       @click.stop="handleClick"
       :disabled="loading || (!!path && !workspaceStatus)"
     >
-      {{ buttonText }}
+      <FolderOpenIcon v-if="path" class="icon is-small" size="16" />
+      <FolderPlusIcon v-else class="icon is-small" size="16" />
     </button>
     
     <template v-if="path">
-      <button class="button ml-1" @click.stop="showSnapshotsModal = true">
-        {{ $t('task_path.snapshots', 'Snapshots') }}
+      <button class="button icon-button" title="Snapshots" @click.stop="showSnapshotsModal = true" :disabled="!workspaceStatus">
+        <DatabaseIcon class="icon is-small" size="16" />
       </button>
-      <button class="button ml-1" @click.stop="showCreateSnapshotModal = true">
-        {{ $t('task_path.create_snapshot', 'Create Snapshot') }}
+      <button class="button icon-button" title="Create Snapshot" @click.stop="showCreateSnapshotModal = true" :disabled="!workspaceStatus">
+        <CopyPlusIcon class="icon is-small" size="16" />
       </button>
     </template>
 
@@ -51,7 +53,7 @@
 <script>
 import SnapshotsModal from '@/components/modals/SnapshotsModal.vue'
 import CreateSnapshotModal from '@/components/modals/CreateSnapshotModal.vue'
-import { RefreshCwIcon, UnlinkIcon, LinkIcon } from 'lucide-vue-next'
+import { RefreshCwIcon, UnlinkIcon, LinkIcon, FolderOpenIcon, FolderPlusIcon, DatabaseIcon, CopyPlusIcon } from 'lucide-vue-next'
 
 export default {
   name: 'task-path-button',
@@ -60,7 +62,11 @@ export default {
     CreateSnapshotModal,
     RefreshCwIcon,
     UnlinkIcon,
-    LinkIcon
+    LinkIcon,
+    FolderOpenIcon,
+    FolderPlusIcon,
+    DatabaseIcon,
+    CopyPlusIcon
   },
   props: {
     taskId: {
@@ -84,10 +90,7 @@ export default {
     }
   },
   computed: {
-    buttonText() {
-      if (this.loading) return 'Loading...'
-      return this.path || 'Create Folder'
-    }
+    // computed properties removed since buttonText is no longer needed
   },
   watch: {
     taskId: {
@@ -247,11 +250,9 @@ export default {
 }
 .task-path-button-wrapper {
   position: relative;
-  display: inline-block;
-}
-
-.button.ml-1 {
-  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .icon-button {
