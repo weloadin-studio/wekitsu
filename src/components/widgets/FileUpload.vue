@@ -6,7 +6,10 @@
     @dragleave="onDragleave"
   >
     <form enctype="multipart/form-data" novalidate>
-      <div class="dropbox">
+      <div 
+        class="dropbox" 
+        :class="{ 'is-dragging': isDragging }"
+      >
         <label
           :class="{
             button: true,
@@ -83,6 +86,7 @@ export default {
     return {
       isInitial: true,
       isSaving: false,
+      isDragging: false,
       uploadedFiles: []
     }
   },
@@ -108,6 +112,8 @@ export default {
 
   methods: {
     filesChange(name, files) {
+      if (files.length === 0) return
+
       this.uploadedFiles = []
       const forms = []
       for (let i = 0, numFiles = files.length; i < numFiles; i++) {
@@ -122,15 +128,16 @@ export default {
         }
       }
       if (this.multiple) {
-        this.$emit('fileselected', forms)
+        this.$emit('fileselected', forms, files)
       } else {
-        this.$emit('fileselected', forms[0])
+        this.$emit('fileselected', forms[0], files[0])
       }
     },
 
     reset() {
       this.isSaving = false
       this.isInitial = true
+      this.isDragging = false
       this.uploadedFiles = []
       if (this.$refs.uploadInput) {
         this.$refs.uploadInput.value = ''
@@ -146,8 +153,8 @@ export default {
     },
 
     onDrop(event) {
+      this.isDragging = false
       if (event.dataTransfer.files) {
-        this.isDragging = false
         this.isSaving = false
         this.filesChange('file', event.dataTransfer.files)
       }
@@ -160,10 +167,44 @@ export default {
 .dropbox {
   display: flex;
   align-items: center;
+  justify-content: center;
+  border: 2px dashed #dbdbdb;
+  padding: 20px;
+  border-radius: 6px;
+  background-color: transparent;
+  transition: all 0.2s ease;
+  min-height: 80px;
+
+  &.is-dragging {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: #00d1b2; /* Bulma primary */
+  }
+}
+
+:global(.dark) .dropbox {
+  border-color: #40444b;
+  &.is-dragging {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: #7289da;
+  }
+}
+
+.visuallyhidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
 }
 
 .file-upload-status {
-  margin-left: 0.5rem;
+  margin-left: 1rem;
   font-style: italic;
+  font-weight: 500;
+  word-break: break-all;
 }
 </style>
+

@@ -34,9 +34,7 @@
                 <th class="date datatable-row-header">{{ $t('snapshots.created_at', 'Created At') }}</th>
                 <th class="type datatable-row-header">{{ $t('snapshots.type', 'Type') }}</th>
                 <th class="message datatable-row-header">{{ $t('snapshots.message', 'Message') }}</th>
-                <th class="action datatable-row-header">{{ $t('snapshots.download', 'Download') }}</th>
-                <th class="action datatable-row-header">{{ $t('snapshots.rollback', 'Rollback') }}</th>
-                <th class="action datatable-row-header">{{ $t('snapshots.delete', 'Delete') }}</th>
+                <th class="action datatable-row-header">{{ $t('main.actions', 'Actions') }}</th>
               </tr>
             </thead>
             <tbody class="datatable-body">
@@ -66,40 +64,41 @@
                   {{ snapshot.message }}
                 </td>
                 <td class="action datatable-row-header">
-                  <a
-                    v-if="snapshot.zipUrl"
-                    :href="snapshot.zipUrl"
-                    class="button is-small is-primary"
-                    target="_blank"
-                    download
-                  >
-                    <icon-download />
-                  </a>
-                </td>
-                <td class="action datatable-row-header">
-                  <button
-                     class="button is-small is-warning"
-                     @click="confirmRollback(snapshot)"
-                  >
-                    <icon-rotate-ccw />
-                  </button>
-                </td>
-                <td class="action datatable-row-header">
-                  <button
-                     class="button is-small is-danger"
-                     @click="confirmDelete(snapshot)"
-                  >
-                    <icon-trash />
-                  </button>
+                  <div class="field is-grouped" style="justify-content: center; gap: 0.5rem; display: flex;">
+                    <a
+                      v-if="snapshot.zipUrl"
+                      :href="snapshot.zipUrl"
+                      class="button is-small is-primary"
+                      title="Download"
+                      target="_blank"
+                      download
+                    >
+                      <icon-download />
+                    </a>
+                    <button
+                       class="button is-small is-warning"
+                       title="Rollback"
+                       @click="confirmRollback(snapshot)"
+                    >
+                      <icon-rotate-ccw />
+                    </button>
+                    <button
+                       class="button is-small is-danger"
+                       title="Delete"
+                       @click="confirmDelete(snapshot)"
+                    >
+                      <icon-trash />
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="isLoading">
-                <td colspan="7" class="has-text-centered">
+                <td colspan="5" class="has-text-centered">
                   {{ $t('main.loading', 'Loading...') }}
                 </td>
               </tr>
               <tr v-if="!isLoading && filteredSnapshots.length === 0">
-                <td colspan="7" class="has-text-centered">
+                <td colspan="5" class="has-text-centered">
                   {{ $t('snapshots.no_snapshots', 'No snapshots found.') }}
                 </td>
               </tr>
