@@ -11,7 +11,7 @@
       <div class="box content">
         <div class="columns is-vcentered mb-4">
           <div class="column">
-            <h3 class="title is-4">
+            <h3 class="title">
               {{ $t('snapshots.title', 'Snapshots') }}
             </h3>
           </div>
@@ -43,7 +43,7 @@
                 :key="snapshot.commitId"
                 class="datatable-row"
               >
-                <td class="thumbnail datatable-row-header">
+                <td class="thumbnail">
                   <img
                     v-if="snapshot.thumbnailUrl"
                     :src="snapshot.thumbnailUrl"
@@ -54,40 +54,40 @@
                     <icon-image />
                   </div>
                 </td>
-                <td class="date datatable-row-header">
+                <td class="date">
                   {{ formatDate(snapshot.createdAt) }}
                 </td>
-                <td class="type datatable-row-header">
-                  <span class="tag">{{ snapshot.type }}</span>
+                <td class="type">
+                  <span class="tag" :class="{ 'is-warning': snapshot.type === 'source', 'is-success': snapshot.type === 'exports' || snapshot.type === 'export' }">{{ snapshot.type }}</span>
                 </td>
-                <td class="message datatable-row-header">
+                <td class="message">
                   {{ snapshot.message }}
                 </td>
-                <td class="action datatable-row-header">
+                <td class="action">
                   <div class="field is-grouped" style="justify-content: center; gap: 0.5rem; display: flex;">
                     <a
                       v-if="snapshot.zipUrl"
                       :href="snapshot.zipUrl"
-                      class="button is-small is-primary"
+                      class="button icon-button is-primary"
                       title="Download"
                       target="_blank"
                       download
                     >
-                      <icon-download />
+                      <icon-download class="icon is-small" size="16" />
                     </a>
                     <button
-                       class="button is-small is-warning"
+                       class="button icon-button is-warning"
                        title="Rollback"
                        @click="confirmRollback(snapshot)"
                     >
-                      <icon-rotate-ccw />
+                      <icon-rotate-ccw class="icon is-small" size="16" />
                     </button>
                     <button
-                       class="button is-small is-danger"
+                       class="button icon-button is-danger"
                        title="Delete"
                        @click="confirmDelete(snapshot)"
                     >
-                      <icon-trash />
+                      <icon-trash class="icon is-small" size="16" />
                     </button>
                   </div>
                 </td>
@@ -106,7 +106,7 @@
           </table>
         </div>
 
-        <div class="has-text-right modal-footer mt-4">
+        <div class="has-text-right modal-footer">
           <button @click="$emit('cancel')" class="button">
             {{ $t('main.close', 'Close') }}
           </button>
@@ -321,7 +321,7 @@ export default {
 .datatable-wrapper {
   max-height: 60vh;
   overflow-y: auto;
-  border: 1px solid #dbdbdb;
+  border: 0px solid #dbdbdb;
   border-radius: 4px;
 }
 
@@ -332,16 +332,16 @@ export default {
 .datatable-head th {
   position: sticky;
   top: 0;
-  background: white; /* Ensure header is opaque */
+  background: rgb(73, 73, 73); /* Ensure header is opaque */
   z-index: 10;
-  box-shadow: 0 1px 0 #dbdbdb;
+  box-shadow: 0 0px 0 #1b1b1b;
 }
 
 /* Dark mode support for sticky header */
 :global(.dark) .datatable-head th {
   background: #2f3136; /* Adjust based on your dark theme */
-  color: #b9bbbe;
-  box-shadow: 0 1px 0 #40444b;
+  color: #444444;
+  box-shadow: 0 0px 0 #1b1b1b;
 }
 
 .thumbnail {
@@ -366,8 +366,8 @@ export default {
 }
 
 .snapshot-thumb {
-  max-width: 60px;
-  max-height: 60px;
+  max-width: 160px;
+  max-height: 160px;
   border-radius: 4px;
   object-fit: cover;
 }
@@ -390,7 +390,7 @@ export default {
 }
 
 .modal-footer {
-  border-top: 1px solid #dbdbdb;
+  border-top: 0px solid #dbdbdb;
   padding-top: 1rem;
 }
 
@@ -398,4 +398,10 @@ export default {
   border-top-color: #40444b;
 }
 
+.icon-button {
+  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>

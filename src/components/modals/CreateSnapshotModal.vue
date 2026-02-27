@@ -146,14 +146,24 @@ export default {
 
   methods: {
     async processMediaFile(file, type) {
-      if (!file || !file.path) return null;
+      if (!file) return null;
+
+      // Get the native filesystem path via Electron's webUtils
+      let filePath = null;
+      if (window.electronAPI && window.electronAPI.getPathForFile) {
+        filePath = window.electronAPI.getPathForFile(file);
+      }
+      if (!filePath) {
+        console.error(`Cannot get native path for ${type} file`);
+        return null;
+      }
       
       this.isProcessing = true;
       this.processingMessage = `Processing ${type}... Please wait.`;
       
       try {
         if (window.electronAPI && window.electronAPI.processMedia) {
-          const res = await window.electronAPI.processMedia(file.path, type);
+          const res = await window.electronAPI.processMedia(filePath, type);
           if (res && res.success) {
             return res.processedPath;
           } else {
