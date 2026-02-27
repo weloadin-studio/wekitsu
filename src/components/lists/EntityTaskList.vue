@@ -17,13 +17,42 @@
               {{ $t('tasks.fields.duration').substring(0, 3) }}.
             </th>
             <th class="startdate">
-              {{ $t('tasks.fields.start_date_short') }}
+              <div class="flexcolumn">
+                <span class="flexrow-item">
+                  {{ $t('tasks.fields.start_date_short') }}
+                </span>
+                <date-field
+                  class="flexrow-item"
+                  :model-value="null"
+                  :with-margin="false"
+                  @update:model-value="onBulkStartDateChange"
+                />
+              </div>
             </th>
             <th class="duedate">
-              {{ $t('tasks.fields.due_date') }}
+              <div class="flexcolumn">
+                <span class="flexrow-item">
+                  {{ $t('tasks.fields.due_date') }}
+                </span>
+                <date-field
+                  class="flexrow-item"
+                  :model-value="null"
+                  :with-margin="false"
+                  @update:model-value="onBulkDueDateChange"
+                />
+              </div>
             </th>
             <th class="assignees">
-              {{ $t('tasks.fields.assignees') }}
+              <div class="flexcolumn">
+                <span class="flexrow-item">
+                  {{ $t('tasks.fields.assignees') }}
+                </span>
+                <people-field
+                  class="flexrow-item"
+                  :people="projectTeamPeople"
+                  @update:model-value="onBulkAssigneesChange"
+                />
+              </div>
             </th>
             <th class="end-cell"></th>
           </tr>
@@ -432,6 +461,51 @@ export default {
         }
       } catch (error) {
         console.error('Failed to update assignees:', error)
+      }
+    },
+
+    async onBulkStartDateChange(value) {
+      if (!value) return
+      const start_date = this.formatLocalDate(value)
+      try {
+        for (const task of this.entries) {
+          const fullTask = this.getTask(task.id) || task
+          await this.$store.dispatch('updateTask', {
+            taskId: fullTask.id,
+            data: { start_date }
+          })
+        }
+      } catch (error) {
+        console.error('Failed to bulk update start date:', error)
+      }
+    },
+
+    async onBulkDueDateChange(value) {
+      if (!value) return
+      const due_date = this.formatLocalDate(value)
+      try {
+        for (const task of this.entries) {
+          const fullTask = this.getTask(task.id) || task
+          await this.$store.dispatch('updateTask', {
+            taskId: fullTask.id,
+            data: { due_date }
+          })
+        }
+      } catch (error) {
+        console.error('Failed to bulk update due date:', error)
+      }
+    },
+
+    async onBulkAssigneesChange(person) {
+      if (!person) return
+      try {
+        const taskIds = this.entries.map(task => (this.getTask(task.id) || task).id)
+        await this.$store.dispatch('assignSelectedTasks', {
+          personId: person.id,
+          taskIds
+        })
+      } catch (error) {
+        console.error('Failed to bulk assign person to tasks:', error)
       }
     },
 
