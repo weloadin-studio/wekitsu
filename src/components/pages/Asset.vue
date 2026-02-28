@@ -626,10 +626,14 @@ export default {
       form.id = this.currentAsset.id
       this.loading.edit = true
       this.errors.edit = false
+      const linkedTaskId = form.linkedTaskId
       this.editAsset(form)
         .then(() => {
           this.loading.edit = false
           this.modals.edit = false
+          if (linkedTaskId && form.id && window.electronAPI && window.electronAPI.linkAssetTask) {
+            window.electronAPI.linkAssetTask({ assetId: form.id, taskId: linkedTaskId }).catch(console.error)
+          }
         })
         .catch(err => {
           console.error(err)

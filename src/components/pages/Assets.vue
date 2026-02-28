@@ -606,13 +606,17 @@ export default {
     confirmNewAssetStay(form) {
       this.loading.stay = true
       this.success.edit = false
+      const linkedTaskId = form.linkedTaskId
       this.newAsset(form)
-        .then(() => {
+        .then(asset => {
           this.loading.stay = false
           this.loading.edit = false
           this.resetLightEditModal()
           this.$refs['edit-asset-modal'].focusName()
           this.success.edit = true
+          if (linkedTaskId && asset && asset.id && window.electronAPI && window.electronAPI.linkAssetTask) {
+            window.electronAPI.linkAssetTask({ assetId: asset.id, taskId: linkedTaskId }).catch(console.error)
+          }
         })
         .catch(err => {
           console.error(err)
@@ -627,15 +631,19 @@ export default {
       let action = 'newAsset'
       this.loading.edit = true
       this.errors.edit = false
+      const linkedTaskId = form.linkedTaskId
       if (this.assetToEdit && this.assetToEdit.id) {
         action = 'editAsset'
         form.id = this.assetToEdit.id
       }
       this[action](form)
-        .then(form => {
+        .then(asset => {
           this.loading.edit = false
           this.modals.isNewDisplayed = false
           this.applySearchFromUrl(false)
+          if (linkedTaskId && asset && asset.id && window.electronAPI && window.electronAPI.linkAssetTask) {
+            window.electronAPI.linkAssetTask({ assetId: asset.id, taskId: linkedTaskId }).catch(console.error)
+          }
         })
         .catch(err => {
           console.error(err)

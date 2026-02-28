@@ -293,17 +293,27 @@ export default {
       this.$refs.nameField.focus()
     },
 
+    getLinkedTaskId() {
+      if (!this.linkedTaskTypeId || !this.linkedAssetId) return null;
+      const selectedAsset = this.linkedAssetsList.find(a => a.id === this.linkedAssetId);
+      if (!selectedAsset) return null;
+      const task = selectedAsset.tasks.find(t => t.task_type_id === this.linkedTaskTypeId);
+      return task ? task.id : null;
+    },
+
     confirmAndStayClicked() {
       this.$emit('confirm-and-stay', {
         ...this.form,
-        is_shared: this.form.is_shared === 'true'
+        is_shared: this.form.is_shared === 'true',
+        linkedTaskId: this.getLinkedTaskId()
       })
     },
 
     confirmClicked() {
       this.$emit('confirm', {
         ...this.form,
-        is_shared: this.form.is_shared === 'true'
+        is_shared: this.form.is_shared === 'true',
+        linkedTaskId: this.getLinkedTaskId()
       })
     },
 

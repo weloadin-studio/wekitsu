@@ -92,6 +92,26 @@
             <!-- {{ task.id }} -->
             <task-path-button :task-id="task.id" :asset-type="task.entity_type_name" />
           </div>
+
+          <div class="linked-assets-section mt1" v-if="linkedAssets && linkedAssets.length > 0">
+            <div class="flexrow">
+              <span class="flexrow-item ml1" style="font-weight: 600; font-size: 0.9em; text-transform: uppercase;">
+                {{ $t('tasks.fields.linked_assets') || 'Linked Assets' }}
+              </span>
+            </div>
+            <div class="pa1 pt0 flexrow" style="gap: 8px; flex-wrap: wrap;">
+              <template v-for="link in linkedAssets" :key="link.id">
+                <router-link 
+                  v-if="link.assetId"
+                  :to="`/productions/${currentProductionId}/assets/${link.assetId}`"
+                  class="flexrow-item button is-small is-outlined"
+                >
+                  <kitsu-icon name="asset" class="mr1" />
+                  {{ link.assetName || 'View Linked Asset' }}
+                </router-link>
+              </template>
+            </div>
+          </div>
         </div>
 
         <div class="flexrow" v-if="showAssignees && task.assignees.length > 0">
@@ -482,6 +502,8 @@ export default {
       commentToEdit: null,
       isWide: false,
       isExtraWide: false,
+      linkedAssets: [],
+      linkedAssetsLoading: false,
       otherPreviews: [],
       panelWidth: 800,
       selectedEpisodes: null,
@@ -887,6 +909,7 @@ export default {
       if (this.task) {
         this.loading.task = true
         this.errors.task = false
+        this.fetchLinkedAssets(this.task.id)
         this.loadTaskComments({
           taskId: this.task.id,
           entityId: this.task.entity_id
@@ -899,6 +922,24 @@ export default {
             console.error(err)
             this.errors.task = true
           })
+      }
+    },
+
+    async fetchLinkedAssets(taskId) {
+      if (!window.electronAPI || !window.electronAPI.getLinkedAssets) return;
+      this.linkedAssetsLoading = true;
+      try {
+        const response = await window.electronAPI.getLinkedAssets(taskId);
+        if (response.success && response.data) {
+          this.linkedAssets = response.data;
+        } else {
+          this.linkedAssets = [];
+        }
+      } catch (err) {
+        console.error("Failed to fetch linked assets", err);
+        this.linkedAssets = [];
+      } finally {
+        this.linkedAssetsLoading = false;
       }
     },
 
