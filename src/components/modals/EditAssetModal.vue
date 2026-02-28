@@ -17,11 +17,33 @@
         </h1>
 
         <form @submit.prevent>
-          <combobox
-            :label="$t('assets.fields.type')"
-            :options="productionAssetTypeOptions"
-            v-model="form.entity_type_id"
-          />
+          <div class="flexrow">
+            <combobox
+              class="flexrow-item"
+              :label="$t('assets.fields.type')"
+              :options="productionAssetTypeOptions"
+              v-model="form.entity_type_id"
+            />
+            <combobox
+              class="flexrow-item"
+              label="Linked Production"
+              :options="linkedProductionOptions"
+              v-model="linkedProductionId"
+            />
+            <combobox
+              class="flexrow-item"
+              label="Linked Asset"
+              :options="linkedAssetOptions"
+              v-model="linkedAssetId"
+              :is-loading="isLoadingLinkedAssets"
+            />
+            <combobox
+              class="flexrow-item"
+              label="Linked Task Type"
+              :options="linkedTaskTypeOptions"
+              v-model="linkedTaskTypeId"
+            />
+          </div>
           <combobox
             :label="$t('assets.fields.episode')"
             :options="episodeOptions"
@@ -106,6 +128,7 @@
 import { mapGetters } from 'vuex'
 
 import { modalMixin } from '@/components/modals/base_modal'
+import assetsApi from '@/store/api/assets'
 
 import Combobox from '@/components/widgets/Combobox.vue'
 import ComboboxBoolean from '@/components/widgets/ComboboxBoolean.vue'
@@ -170,7 +193,12 @@ export default {
         },
         is_shared: 'false'
       },
-      assetSuccessText: ''
+      assetSuccessText: '',
+      linkedProductionId: null,
+      linkedAssetId: null,
+      linkedTaskTypeId: null,
+      linkedAssetsList: [],
+      isLoadingLinkedAssets: false
     }
   },
 
@@ -211,6 +239,41 @@ export default {
           value: 'null'
         })
       }
+      return options
+    },
+
+    linkedProductionOptions() {
+      const options = this.openProductions.map(prod => ({
+        label: prod.name,
+        value: prod.id
+      }))
+      options.unshift({ label: 'None', value: null })
+      return options
+    },
+
+    linkedAssetOptions() {
+      const options = this.linkedAssetsList.map(asset => ({
+        label: asset.name,
+        value: asset.id
+      }))
+      options.unshift({ label: 'None', value: null })
+      return options
+    },
+
+    linkedTaskTypeOptions() {
+      if (!this.linkedAssetId) return [{ label: 'None', value: null }]
+      const selectedAsset = this.linkedAssetsList.find(a => a.id === this.linkedAssetId)
+      if (!selectedAsset) return [{ label: 'None', value: null }]
+      
+      const taskTypeIds = new Set(selectedAsset.tasks.map(t => t.task_type_id))
+      const options = Array.from(taskTypeIds).map(id => {
+        const type = this.$store.getters.taskTypeMap.get(id)
+        return {
+          label: type ? type.name : id,
+          value: id
+        }
+      })
+      options.unshift({ label: 'None', value: null })
       return options
     }
   },
@@ -279,6 +342,11 @@ export default {
           : null
         this.form.data = {}
         this.form.is_shared = 'false'
+        
+        this.linkedProductionId = null
+        this.linkedAssetId = null
+        this.linkedTaskTypeId = null
+        this.linkedAssetsList = []
       } else {
         const entityTypeId = this.getEntityTypeIdDefaultValue()
         this.form = {
@@ -328,6 +396,30 @@ export default {
     currentProduction() {
       this.form.entity_type_id = null
       this.resetForm()
+    },
+
+    async linkedProductionId() {
+      this.linkedAssetId = null
+      this.linkedTaskTypeId = null
+      this.linkedAssetsList = []
+      if (!this.linkedProductionId) return
+
+      this.isLoadingLinkedAssets = true
+      try {
+        const prod = this.openProductions.find(p => p.id === this.linkedProductionId)
+        if (prod) {
+          const assets = await assetsApi.getAssets(prod, null, true)
+          this.linkedAssetsList = assets
+        }
+      } catch (err) {
+        console.error('Failed to load assets for linked production', err)
+      } finally {
+        this.isLoadingLinkedAssets = false
+      }
+    },
+
+    linkedAssetId() {
+      this.linkedTaskTypeId = null
     }
   }
 }
