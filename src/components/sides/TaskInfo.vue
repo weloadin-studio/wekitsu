@@ -101,14 +101,24 @@
             </div>
             <div class="pa1 pt0 flexrow" style="gap: 8px; flex-wrap: wrap;">
               <template v-for="link in linkedAssets" :key="link.id">
-                <router-link 
-                  v-if="link.assetId"
-                  :to="`/productions/${currentProductionId}/assets/${link.assetId}`"
-                  class="flexrow-item button is-small is-outlined"
-                >
-                  <kitsu-icon name="asset" class="mr1" />
-                  {{ link.assetName || 'View Linked Asset' }}
-                </router-link>
+                <div v-if="link.assetId" style="display: flex; align-items: center;">
+                  <router-link 
+                    :to="`/productions/${currentProductionId}/assets/${link.assetId}`"
+                    class="button is-small is-outlined"
+                    style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"
+                  >
+                    <kitsu-icon name="asset" class="mr1" />
+                    {{ link.assetName || 'View Linked Asset' }}
+                  </router-link>
+                  <button 
+                    class="button is-small is-outlined is-danger" 
+                    style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 8px;"
+                    title="Delete Link"
+                    @click="deleteLinkedAsset(link.assetId)"
+                  >
+                    <x-icon size="14" />
+                  </button>
+                </div>
               </template>
             </div>
           </div>
@@ -940,6 +950,25 @@ export default {
         this.linkedAssets = [];
       } finally {
         this.linkedAssetsLoading = false;
+      }
+    },
+
+    async deleteLinkedAsset(assetId) {
+      if (!window.electronAPI || !window.electronAPI.deleteLinkedAsset) return;
+      if (confirm('Are you sure you want to remove this linked asset?')) {
+        this.linkedAssetsLoading = true;
+        try {
+          const response = await window.electronAPI.deleteLinkedAsset(assetId);
+          if (response.success) {
+            this.fetchLinkedAssets(this.task.id);
+          } else {
+            console.error("Failed to delete linked asset", response.error);
+          }
+        } catch (err) {
+          console.error("Error deleting linked asset", err);
+        } finally {
+          this.linkedAssetsLoading = false;
+        }
       }
     },
 

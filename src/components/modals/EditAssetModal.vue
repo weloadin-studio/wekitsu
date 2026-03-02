@@ -24,6 +24,32 @@
               :options="productionAssetTypeOptions"
               v-model="form.entity_type_id"
             />
+          </div>
+          <div v-if="existingLinkedTask" class="notification is-info is-light mt1 flexrow">
+            <span class="flexrow-item filler" style="display: flex; align-items: center;">
+              Currently linked to task: 
+              <router-link 
+                v-if="existingLinkedTaskData && existingLinkedTaskData.projectId && existingLinkedTaskData.entityId"
+                :to="`/productions/${existingLinkedTaskData.projectId}/assets/${existingLinkedTaskData.entityId}`"
+                class="ml-1"
+                style="font-weight: bold; text-decoration: underline;"
+                @click="$emit('cancel')"
+              >
+                {{ existingLinkedTaskName }}
+              </router-link>
+              <strong v-else class="ml-1">{{ existingLinkedTaskName }}</strong>
+            </span>
+            <button 
+              class="button is-small is-danger is-outlined flexrow-item" 
+              @click="deleteExistingLink" 
+              title="Delete Link"
+              style="margin-left: 10px;"
+            >
+              <x-icon size="14" class="mr-1" />
+              Remove Link
+            </button>
+          </div>
+          <div class="flexrow mt1" v-if="!existingLinkedTask">
             <combobox
               class="flexrow-item"
               label="Linked Production"
@@ -198,7 +224,10 @@ export default {
       linkedAssetId: null,
       linkedTaskTypeId: null,
       linkedAssetsList: [],
-      isLoadingLinkedAssets: false
+      isLoadingLinkedAssets: false,
+      existingLinkedTask: null,
+      existingLinkedTaskName: '',
+      existingLinkedTaskData: null
     }
   },
 
@@ -372,6 +401,56 @@ export default {
             } || {},
           is_shared: String(this.assetToEdit.is_shared === true)
         }
+        
+        this.linkedProductionId = null
+        this.linkedAssetId = null
+        this.linkedTaskTypeId = null
+        this.linkedAssetsList = []
+        this.fetchExistingLinkedTask()
+      }
+    },
+    
+    async fetchExistingLinkedTask() {
+      if (!this.assetToEdit || !this.assetToEdit.id) return
+      this.existingLinkedTask = null
+      this.existingLinkedTaskName = ''
+      this.existingLinkedTaskData = null
+      
+      if (!window.electronAPI || !window.electronAPI.getLinkedTask) return
+      try {
+        const res = await window.electronAPI.getLinkedTask(this.assetToEdit.id)
+        if (res.success && res.data) {
+          this.existingLinkedTask = res.data
+          // Instead of fetching all the nested tasks, we'll hit the task API to get the name
+          if (window.electronAPI.getTask) {
+             const taskRes = await window.electronAPI.getTask(res.data.taskId)
+             if (taskRes.success && taskRes.data) {
+                this.existingLinkedTaskData = taskRes.data
+                this.existingLinkedTaskName = `${taskRes.data.assetName} - ${taskRes.data.taskType}`
+             }
+          } else {
+             this.existingLinkedTaskName = res.data.taskId
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching linked task for EditAssetModal", err)
+      }
+    },
+    
+    async deleteExistingLink() {
+      if (!this.existingLinkedTask) return
+      if (!window.electronAPI || !window.electronAPI.deleteLinkedAsset) return
+      
+      try {
+        const res = await window.electronAPI.deleteLinkedAsset(this.existingLinkedTask.assetId)
+        if (res.success) {
+          this.existingLinkedTask = null
+          this.existingLinkedTaskName = ''
+        } else {
+          console.error("Failed to delete link", res.error)
+        }
+      } catch (err) {
+        console.error("Failed to delete link", err)
       }
     }
   },
