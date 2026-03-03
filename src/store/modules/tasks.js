@@ -156,11 +156,11 @@ const actions = {
     })
   },
 
-  loadTasks({}, filters) {
+  loadTasks({ }, filters) {
     return tasksApi.getTasks(filters)
   },
 
-  loadOpenTasks({}, filters) {
+  loadOpenTasks({ }, filters) {
     return tasksApi.getOpenTasks(filters)
   },
 
@@ -322,7 +322,7 @@ const actions = {
     }
   },
 
-  deleteAllTasks({}, { projectId, taskTypeId, taskIds }) {
+  deleteAllTasks({ }, { projectId, taskTypeId, taskIds }) {
     return tasksApi.deleteAllTasks(projectId, taskTypeId, taskIds)
   },
 
@@ -1176,6 +1176,15 @@ const mutations = {
   [EDIT_TASK_DATES](state, { taskId, data }) {
     const task = state.taskMap.get(taskId)
     if (task) {
+      if ('priority' in data) {
+        import('vue').then(Vue => {
+          if (Vue.default && Vue.default.set) {
+            Vue.default.set(task, 'priority', data.priority)
+          } else {
+            task.priority = data.priority
+          }
+        })
+      }
       Object.assign(task, data)
     }
   },

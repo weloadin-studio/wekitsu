@@ -10,6 +10,9 @@
             <th class="status">
               {{ $t('tasks.fields.task_status') }}
             </th>
+            <th class="priority">
+              {{ $t('task_types.fields.priority') || 'Priority' }}
+            </th>
             <th class="estimation">
               {{ $t('tasks.fields.estimation').substring(0, 3) }}.
             </th>
@@ -100,6 +103,20 @@
               />
             </td>
 
+            <!-- Priority: inline select -->
+            <td class="priority" @click.stop v-if="getTask(task.id)">
+              <select
+                class="inline-input"
+                :value="getTask(task.id).priority || 0"
+                @change="onPriorityChange(getTask(task.id), $event.target.value)"
+              >
+                <option value="0">{{ $t('tasks.priority.normal') }}</option>
+                <option value="1">{{ $t('tasks.priority.high') }}</option>
+                <option value="2">{{ $t('tasks.priority.very_high') }}</option>
+                <option value="3">{{ $t('tasks.priority.emergency') }}</option>
+              </select>
+            </td>
+
             <!-- Estimation: inline number input -->
             <td class="estimation" @click.stop>
               <input
@@ -170,6 +187,7 @@
           <tr class="datatable-row total-row">
             <td>{{ $t('main.total') }}</td>
             <td>{{ entityProgress }}</td>
+            <td></td>
             <td class="estimation">{{ formatDuration(entityEstimation) }}</td>
             <td class="duration">{{ formatDuration(entityDuration) }}</td>
             <td class="startdate">{{ entityStartDate }}</td>
@@ -366,6 +384,19 @@ export default {
       }
     },
 
+    async onPriorityChange(task, value) {
+      const parsed = parseInt(value, 10)
+      const priority = isNaN(parsed) ? 0 : parsed
+      try {
+        await this.$store.dispatch('updateTask', {
+          taskId: task.id,
+          data: { priority }
+        })
+      } catch (error) {
+        console.error('Failed to update priority:', error)
+      }
+    },
+
     async onEstimationChange(task, value) {
       const parsed = parseFloat(value)
       const estimation = isNaN(parsed) ? 0 : parsed
@@ -534,6 +565,11 @@ export default {
 .type {
   max-width: 250px;
   min-width: 250px;
+}
+
+.priority {
+  max-width: 110px;
+  min-width: 110px;
 }
 
 .estimation,
