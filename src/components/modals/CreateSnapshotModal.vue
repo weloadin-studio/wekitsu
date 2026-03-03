@@ -100,6 +100,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { modalMixin } from '@/components/modals/base_modal'
 import FileUpload from '@/components/widgets/FileUpload.vue'
 
@@ -142,6 +143,10 @@ export default {
       isProcessing: false,
       processingMessage: ''
     }
+  },
+
+  computed: {
+    ...mapGetters(['user'])
   },
 
   methods: {
@@ -247,7 +252,9 @@ export default {
             type: this.form.type,
             message: this.form.message,
             thumbnailPath: this.form.thumbnailPath,
-            previewPath: this.form.previewPath
+            previewPath: this.form.previewPath,
+            userId: this.user ? this.user.id : null,
+            username: this.user ? (this.user.full_name || this.user.name) : null
           })
 
           if (response && response.success) {

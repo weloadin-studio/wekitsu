@@ -33,6 +33,7 @@
                 <th class="thumbnail datatable-row-header">{{ $t('snapshots.thumbnail', 'Thumbnail') }}</th>
                 <th class="date datatable-row-header">{{ $t('snapshots.created_at', 'Created At') }}</th>
                 <th class="type datatable-row-header">{{ $t('snapshots.type', 'Type') }}</th>
+                <th class="author datatable-row-header">{{ $t('snapshots.author', 'Author') }}</th>
                 <th class="message datatable-row-header">{{ $t('snapshots.message', 'Message') }}</th>
                 <th class="action datatable-row-header">{{ $t('main.actions', 'Actions') }}</th>
               </tr>
@@ -59,6 +60,12 @@
                 </td>
                 <td class="type">
                   <span class="tag" :class="{ 'is-warning': snapshot.type === 'source', 'is-success': snapshot.type === 'exports' || snapshot.type === 'export' }">{{ snapshot.type }}</span>
+                </td>
+                <td class="author">
+                  <router-link v-if="snapshot.userId" :to="`/people/${snapshot.userId}`">
+                    {{ snapshot.username || snapshot.userId }}
+                  </router-link>
+                  <span v-else>{{ snapshot.username || 'System' }}</span>
                 </td>
                 <td class="message">
                   {{ snapshot.message }}
@@ -93,12 +100,12 @@
                 </td>
               </tr>
               <tr v-if="isLoading">
-                <td colspan="5" class="has-text-centered">
+                <td colspan="6" class="has-text-centered">
                   {{ $t('main.loading', 'Loading...') }}
                 </td>
               </tr>
               <tr v-if="!isLoading && filteredSnapshots.length === 0">
-                <td colspan="5" class="has-text-centered">
+                <td colspan="6" class="has-text-centered">
                   {{ $t('snapshots.no_snapshots', 'No snapshots found.') }}
                 </td>
               </tr>
@@ -357,8 +364,9 @@ export default {
   width: 120px;
 }
 
-
-
+.author {
+  width: 150px;
+}
 
 .action {
   width: 100px;
