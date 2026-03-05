@@ -62,6 +62,7 @@ const ProductionSettings = () =>
   import('@/components/pages/ProductionSettings.vue')
 const Profile = () => import('@/components/pages/Profile.vue')
 const ResetPassword = () => import('@/components/pages/ResetPassword.vue')
+const DefaultComments = () => import('@/components/pages/DefaultComments.vue')
 const ResetChangePassword = () =>
   import('@/components/pages/ResetChangePassword.vue')
 const SalaryScale = () => import('@/components/pages/budget/SalaryScale.vue')
@@ -88,6 +89,7 @@ const ADMIN_PAGES = [
   'backgrounds',
   'bots',
   'custom-actions',
+  'default-comments',
   'departments',
   'logs',
   'main-schedule',
@@ -250,6 +252,12 @@ export const routes = [
         name: 'custom-actions',
         path: 'custom-actions',
         component: CustomActions
+      },
+
+      {
+        name: 'default-comments',
+        path: 'default-comments',
+        component: DefaultComments
       },
 
       {

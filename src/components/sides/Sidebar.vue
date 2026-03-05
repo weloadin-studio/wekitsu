@@ -198,6 +198,12 @@
               </router-link>
             </p>
             <p @click="toggleSidebar()">
+              <router-link :to="{ name: 'default-comments' }">
+                <kitsu-icon class="nav-icon" name="message" />
+                Default Comments
+              </router-link>
+            </p>
+            <p @click="toggleSidebar()">
               <router-link :to="{ name: 'status-automations' }">
                 <kitsu-icon class="nav-icon" name="automations" />
                 {{ $t('status_automations.title') }}
