@@ -558,11 +558,15 @@ const actions = {
                     dc => dc.assetTypeId === asset.entity_type_id && dc.taskTypeId === task.task_type_id
                   )
                   if (matching) {
-                    await dispatch('commentTask', {
+                    const newComment = await dispatch('commentTask', {
                       taskId: task.id,
                       taskStatusId: task.task_status_id,
-                      comment: matching.comment
+                      comment: matching.comment,
+                      checklist: matching.checklist || []
                     })
+                    if (newComment) {
+                      await dispatch('pinComment', newComment)
+                    }
                   }
                 }
               }

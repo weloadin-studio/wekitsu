@@ -47,6 +47,30 @@
                <input class="input" type="text" v-model="form.comment" @keyup.enter="confirmClicked" placeholder="Your default comment..." />
              </div>
           </div>
+          <div class="field">
+             <div class="control">
+                <div class="post-area">
+                  <checklist
+                      :checklist="form.checklist"
+                      @add-item="onAddChecklistItem"
+                      @insert-item="onInsertChecklistItem"
+                      @remove-task="removeTask"
+                      v-if="form.checklist && form.checklist.length > 0"
+                  />
+                  <div class="flexrow button-row mt1">
+                    <button-simple
+                        :class="{
+                          'flexrow-item': true,
+                          active: form.checklist && form.checklist.length !== 0
+                        }"
+                        icon="list"
+                        title="Add Checklist"
+                        @click="addChecklistEntry(-1)"
+                    />
+                  </div>
+                </div>
+             </div>
+          </div>
         </form>
 
         <modal-footer
@@ -64,6 +88,8 @@
 <script>
 import { mapGetters } from 'vuex'
 import { modalMixin } from '@/components/modals/base_modal'
+import Checklist from '@/components/widgets/Checklist.vue'
+import ButtonSimple from '@/components/widgets/ButtonSimple.vue'
 import ModalFooter from '@/components/modals/ModalFooter.vue'
 
 export default {
@@ -72,6 +98,8 @@ export default {
   mixins: [modalMixin],
 
   components: {
+    Checklist,
+    ButtonSimple,
     ModalFooter
   },
 
@@ -101,7 +129,8 @@ export default {
       form: {
         assetTypeId: '',
         taskTypeId: '',
-        comment: ''
+        comment: '',
+        checklist: []
       }
     }
   },
@@ -117,11 +146,49 @@ export default {
   },
 
   methods: {
+    addChecklistEntry(index) {
+        if (!this.form.checklist) this.form.checklist = []
+        this.onAddChecklistItem({
+            index: index,
+            text: '',
+            frame: -1,
+            revision: -1,
+            checked: false
+        })
+    },
+    
+    onAddChecklistItem(item) {
+        if (!this.form.checklist) this.form.checklist = []
+        delete item.index
+        this.form.checklist.push(item)
+    },
+    
+    onInsertChecklistItem(item) {
+        if (!this.form.checklist) this.form.checklist = []
+        this.form.checklist.splice(item.index, 0, item)
+        for (let i = 0; i < this.form.checklist.length; i++) {
+           this.form.checklist[i].index = i
+        }
+    },
+    
+    removeTask(item) {
+        this.form.checklist = this.form.checklist.filter(entry => entry !== item)
+    },
+
     confirmClicked() {
       if (!this.form.assetTypeId || !this.form.taskTypeId || !this.form.comment) {
          return; // Simple validation
       }
-      this.$emit('confirm', { ...this.form })
+      
+      let payload = { ...this.form };
+      if (payload.checklist) {
+          payload.checklist = payload.checklist.filter(item => item.text && item.text.trim().length > 0)
+      }
+      
+      // Strip Vue reactive proxies to prevent structuredClone errors over IPC
+      payload = JSON.parse(JSON.stringify(payload))
+      
+      this.$emit('confirm', payload)
     }
   },
 
@@ -132,13 +199,15 @@ export default {
           id: this.commentToEdit.id,
           assetTypeId: this.commentToEdit.assetTypeId,
           taskTypeId: this.commentToEdit.taskTypeId,
-          comment: this.commentToEdit.comment
+          comment: this.commentToEdit.comment,
+          checklist: this.commentToEdit.checklist ? JSON.parse(JSON.stringify(this.commentToEdit.checklist)) : []
         }
       } else {
         this.form = {
           assetTypeId: '',
           taskTypeId: '',
-          comment: ''
+          comment: '',
+          checklist: []
         }
       }
     }
