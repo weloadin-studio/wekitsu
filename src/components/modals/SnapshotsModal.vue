@@ -45,14 +45,21 @@
                 class="datatable-row"
               >
                 <td class="thumbnail">
-                  <img
-                    v-if="snapshot.thumbnailUrl"
-                    :src="snapshot.thumbnailUrl"
-                    alt="Thumbnail"
-                    class="snapshot-thumb"
-                  />
-                  <div v-else class="placeholder-thumb">
-                    <icon-image />
+                  <div
+                    class="thumbnail-container"
+                    @mouseenter="(e) => showPreview(e, snapshot)"
+                    @mouseleave="hidePreview"
+                    @mousemove="updatePreviewPos"
+                  >
+                    <img
+                      v-if="snapshot.thumbnailUrl"
+                      :src="snapshot.thumbnailUrl"
+                      alt="Thumbnail"
+                      class="snapshot-thumb"
+                    />
+                    <div v-else class="placeholder-thumb">
+                      <icon-image />
+                    </div>
                   </div>
                 </td>
                 <td class="date">
@@ -129,6 +136,29 @@
       @cancel="cancelAction"
       @confirm="performAction"
     />
+
+    <Teleport to="body">
+      <div 
+        v-if="hoveredSnapshot" 
+        class="snapshot-hover-widget"
+        :style="{ top: hoverPos.y + 'px', left: hoverPos.x + 'px' }"
+      >
+        <video 
+          v-if="hoveredSnapshot.previewUrl" 
+          :src="hoveredSnapshot.previewUrl" 
+          autoplay 
+          loop 
+          muted 
+          playsinline
+          class="hover-video"
+        ></video>
+        <img 
+          v-else-if="hoveredSnapshot.thumbnailUrl" 
+          :src="hoveredSnapshot.thumbnailUrl" 
+          class="hover-image" 
+        />
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -181,7 +211,11 @@ export default {
       confirmText: '',
       confirmButtonText: '',
       isActionLoading: false,
-      pendingAction: null
+      pendingAction: null,
+
+      // Hover Preview State
+      hoveredSnapshot: null,
+      hoverPos: { x: 0, y: 0 }
     }
   },
 
@@ -304,6 +338,43 @@ export default {
       this.isError = false
       this.filterType = 'all'
       this.cancelAction()
+      this.hidePreview()
+    },
+
+    showPreview(event, snapshot) {
+      if (!snapshot.thumbnailUrl && !snapshot.previewUrl) return;
+      
+      this.hoveredSnapshot = snapshot;
+      this.updatePreviewPos(event);
+    },
+
+    updatePreviewPos(event) {
+      if (!this.hoveredSnapshot) return;
+      
+      const xOffset = 20;
+      const yOffset = -50;
+      
+      // Basic positioning
+      let x = event.clientX + xOffset;
+      let y = event.clientY + yOffset;
+      
+      // Determine approximate dimensions to prevent off-screen rendering
+      // Usually the video/image will be max ~800px wide
+      const widgetWidth = 800;
+      const widgetHeight = 600;
+      
+      if (x + widgetWidth > window.innerWidth) {
+        x = event.clientX - widgetWidth - 10;
+      }
+      if (y + widgetHeight > window.innerHeight) {
+        y = window.innerHeight - widgetHeight - 10;
+      }
+      
+      this.hoverPos = { x, y };
+    },
+
+    hidePreview() {
+      this.hoveredSnapshot = null;
     }
   },
 
@@ -411,5 +482,44 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.thumbnail-container {
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+}
+
+.snapshot-hover-widget {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: #1e1e1e;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  max-height: 800px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+:global(.dark) .snapshot-hover-widget {
+  background: #2b2b2b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+}
+
+.hover-video, .hover-image {
+  max-width: 100%;
+  max-height: 768px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>
