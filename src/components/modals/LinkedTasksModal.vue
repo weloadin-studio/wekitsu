@@ -26,7 +26,6 @@
                 <th class="datatable-row-header">Asset</th>
                 <th class="datatable-row-header">Task</th>
                 <th class="datatable-row-header">Local Path</th>
-                <th class="datatable-row-header">Status</th>
                 <th class="datatable-row-header action">Actions</th>
               </tr>
             </thead>
@@ -42,9 +41,6 @@
                 </td>
                 <td>{{ task.name }}</td>
                 <td>{{ task.localPath }}</td>
-                <td>
-                  <span class="tag is-success">Linked</span>
-                </td>
                 <td class="action flexrow" style="justify-content: center; gap: 0.5rem">
                   <button class="button icon-button" title="Open Folder" @click="openFolder(task.localPath)">
                     <icon-folder-open class="icon is-small" size="16" />
@@ -55,12 +51,12 @@
                 </td>
               </tr>
               <tr v-if="isLoading">
-                <td colspan="6" class="has-text-centered">
+                <td colspan="5" class="has-text-centered">
                   {{ $t('main.loading', 'Loading...') }}
                 </td>
               </tr>
               <tr v-if="!isLoading && displayTasks.length === 0">
-                <td colspan="6" class="has-text-centered">
+                <td colspan="5" class="has-text-centered">
                   No linked tasks found.
                 </td>
               </tr>

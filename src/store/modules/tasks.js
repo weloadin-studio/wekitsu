@@ -92,7 +92,7 @@ const initialState = {
 
   nbSelectedTasks: 0,
   nbSelectedValidations: 0,
-  isBigThumbnails: false,
+  isBigThumbnails: true,
   isShowAssignations: true,
   isShowInfos: true,
 
