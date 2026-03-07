@@ -70,6 +70,14 @@
 
       <div class="nav-right">
         <a
+          class="nav-item kitsu-summit-button mr-2"
+          @click="display.linkedTasksModal = true"
+          v-if="!isCurrentUserClient && isDesktop"
+        >
+          Linked Tasks
+        </a>
+
+        <a
           class="nav-item kitsu-summit-button"
           @click="$router.go(0)"
           v-if="!isCurrentUserClient"
@@ -219,6 +227,11 @@
       @cancel="display.shortcutModal = false"
       v-if="display.shortcutModal"
     />
+
+    <linked-tasks-modal
+      :active="display.linkedTasksModal"
+      @cancel="display.linkedTasksModal = false"
+    />
   </div>
 </template>
 
@@ -235,6 +248,7 @@ import {
 import localPreferences from '@/lib/preferences'
 
 import GlobalSearchField from '@/components/tops/GlobalSearchField.vue'
+import LinkedTasksModal from '@/components/modals/LinkedTasksModal.vue'
 import NotificationBell from '@/components/widgets/NotificationBell.vue'
 import PeopleAvatar from '@/components/widgets/PeopleAvatar.vue'
 import ShortcutModal from '@/components/modals/ShortcutModal.vue'
@@ -252,6 +266,7 @@ export default {
     ChevronRightIcon,
     GlobalSearchField,
     HelpCircleIcon,
+    LinkedTasksModal,
     LogOutIcon,
     NotificationBell,
     PeopleAvatar,
@@ -270,7 +285,8 @@ export default {
       kitsuVersion: version,
       silent: true,
       display: {
-        shortcutModal: false
+        shortcutModal: false,
+        linkedTasksModal: false
       }
     }
   },
@@ -306,6 +322,10 @@ export default {
       'projectPlugins',
       'user'
     ]),
+
+    isDesktop() {
+      return window && !!window.electronAPI;
+    },
 
     logoPath() {
       return (
