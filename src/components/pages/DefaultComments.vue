@@ -11,6 +11,7 @@
       <table class="datatable mx-auto max-width-1000">
         <thead>
           <tr>
+            <th>Production</th>
             <th>Asset Type</th>
             <th>Task Type</th>
             <th>Comment</th>
@@ -18,7 +19,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="dc in defaultComments" :key="dc.id">
+          <tr v-for="dc in displayedDefaultComments" :key="dc.id">
+            <td>{{ getProductionName(dc.productionId) }}</td>
             <td>{{ getAssetTypeName(dc.assetTypeId) }}</td>
             <td>{{ getTaskTypeName(dc.taskTypeId) }}</td>
             <td>{{ dc.comment }}</td>
@@ -40,6 +42,8 @@
     <edit-default-comment-modal
       :active="isModalActive"
       :comment-to-edit="selectedComment"
+      :productions="openProductions"
+      :current-production-id="currentProduction ? currentProduction.id : ''"
       :is-loading="isSaving"
       :is-error="modalError"
       @cancel="closeModal"
@@ -75,7 +79,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters(['assetTypes', 'taskTypes']),
+    ...mapGetters(['assetTypes', 'taskTypes', 'openProductions', 'currentProduction']),
     
     assetTypeMap() {
         return new Map(this.assetTypes.map(at => [at.id, at.name]));
@@ -83,6 +87,14 @@ export default {
     
     taskTypeMap() {
         return new Map(this.taskTypes.map(tt => [tt.id, tt.name]));
+    },
+
+    productionMap() {
+        return new Map(this.openProductions.map(p => [p.id, p.name]));
+    },
+
+    displayedDefaultComments() {
+        return this.defaultComments;
     }
   },
 
@@ -96,6 +108,10 @@ export default {
 
   methods: {
     ...mapActions(['loadAssetTypes', 'loadTaskTypes']),
+
+    getProductionName(id) {
+        return this.productionMap.get(id) || 'Unknown Production';
+    },
 
     getAssetTypeName(id) {
         return this.assetTypeMap.get(id) || 'Unknown Asset Type';
@@ -142,6 +158,10 @@ export default {
         if (form.id) {
            response = await window.electronAPI.updateDefaultComment(form.id, form.comment);
         } else {
+           // Provide fallback to current production id just in case modal forgot it
+           if (!form.productionId && this.currentProduction) {
+              form.productionId = this.currentProduction.id;
+           }
            response = await window.electronAPI.createDefaultComment({ ...form });
         }
         

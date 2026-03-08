@@ -555,7 +555,7 @@ const actions = {
                 for (const task of createdTasks) {
                   if (!task) continue
                   const matching = defaultComments.find(
-                    dc => dc.assetTypeId === asset.entity_type_id && dc.taskTypeId === task.task_type_id
+                    dc => dc.productionId === asset.project_id && dc.assetTypeId === asset.entity_type_id && dc.taskTypeId === task.task_type_id
                   )
                   if (matching) {
                     const newComment = await dispatch('commentTask', {

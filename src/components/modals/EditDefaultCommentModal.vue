@@ -15,8 +15,24 @@
         <h1 class="title" v-else>
           New Default Comment
         </h1>
-
         <form @submit.prevent>
+          <div class="field">
+             <label class="label">Production</label>
+             <div class="control">
+               <combobox-production
+                 v-model="form.productionId"
+                 :production-list="productions"
+                 :with-margin="false"
+                 v-if="!isEditing"
+               />
+               <div class="select is-fullwidth" v-else>
+                 <select v-model="form.productionId" disabled>
+                   <option :value="form.productionId">{{ getSelectedProductionName }}</option>
+                 </select>
+               </div>
+             </div>
+          </div>
+
           <div class="field">
              <label class="label">Asset Type</label>
              <div class="control">
@@ -91,6 +107,7 @@ import { modalMixin } from '@/components/modals/base_modal'
 import Checklist from '@/components/widgets/Checklist.vue'
 import ButtonSimple from '@/components/widgets/ButtonSimple.vue'
 import ModalFooter from '@/components/modals/ModalFooter.vue'
+import ComboboxProduction from '@/components/widgets/ComboboxProduction.vue'
 
 export default {
   name: 'edit-default-comment-modal',
@@ -100,7 +117,8 @@ export default {
   components: {
     Checklist,
     ButtonSimple,
-    ModalFooter
+    ModalFooter,
+    ComboboxProduction
   },
 
   props: {
@@ -119,6 +137,14 @@ export default {
     commentToEdit: {
       type: Object,
       default: () => null
+    },
+    productions: {
+      type: Array,
+      default: () => []
+    },
+    currentProductionId: {
+      type: String,
+      default: ''
     }
   },
 
@@ -127,6 +153,7 @@ export default {
   data() {
     return {
       form: {
+        productionId: '',
         assetTypeId: '',
         taskTypeId: '',
         comment: '',
@@ -142,6 +169,10 @@ export default {
     },
     errorText() {
         return this.isEditing ? 'Failed to update comment' : 'Failed to create comment'
+    },
+    getSelectedProductionName() {
+        const prod = this.productions.find(p => p.id === this.form.productionId);
+        return prod ? prod.name : 'Unknown Production';
     }
   },
 
@@ -176,11 +207,20 @@ export default {
     },
 
     confirmClicked() {
-      if (!this.form.assetTypeId || !this.form.taskTypeId || !this.form.comment) {
+      let prodId = this.form.productionId;
+      if (!prodId) {
+          if (this.currentProductionId) prodId = this.currentProductionId;
+          else if (this.productions && this.productions.length > 0) prodId = this.productions[0].id;
+      }
+
+      if (!prodId || !this.form.assetTypeId || !this.form.taskTypeId || !this.form.comment) {
+         const errorMsg = `Validation failed!\nProdID: ${prodId}\nAssetType: ${this.form.assetTypeId}\nTaskType: ${this.form.taskTypeId}\nComment length: ${this.form.comment ? this.form.comment.length : 0}`;
+         console.error(errorMsg);
+         alert(errorMsg);
          return; // Simple validation
       }
       
-      let payload = { ...this.form };
+      let payload = { ...this.form, productionId: prodId };
       if (payload.checklist) {
           payload.checklist = payload.checklist.filter(item => item.text && item.text.trim().length > 0)
       }
@@ -197,6 +237,7 @@ export default {
       if (this.commentToEdit && this.commentToEdit.id) {
         this.form = {
           id: this.commentToEdit.id,
+          productionId: this.commentToEdit.productionId,
           assetTypeId: this.commentToEdit.assetTypeId,
           taskTypeId: this.commentToEdit.taskTypeId,
           comment: this.commentToEdit.comment,
@@ -204,6 +245,7 @@ export default {
         }
       } else {
         this.form = {
+          productionId: this.currentProductionId || '',
           assetTypeId: '',
           taskTypeId: '',
           comment: '',
