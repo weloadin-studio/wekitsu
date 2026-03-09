@@ -7,32 +7,30 @@
       @new-clicked="onNewClicked"
     />
 
-    <div class="table-body mt2">
-      <table class="datatable mx-auto max-width-1000">
-        <thead>
+    <div class="table-body mt2 datatable-wrapper max-width-1000 mx-auto">
+      <table class="datatable is-fullwidth">
+        <thead class="datatable-head">
           <tr>
-            <th>Production</th>
-            <th>Asset Type</th>
-            <th>Task Type</th>
-            <th>Comment</th>
-            <th>Actions</th>
+            <th class="datatable-row-header">Production</th>
+            <th class="datatable-row-header">Asset Type</th>
+            <th class="datatable-row-header">Task Type</th>
+            <th class="datatable-row-header">Comment</th>
+            <th class="datatable-row-header action">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="dc in displayedDefaultComments" :key="dc.id">
+        <tbody class="datatable-body">
+          <tr v-for="dc in displayedDefaultComments" :key="dc.id" class="datatable-row">
             <td>{{ getProductionName(dc.productionId) }}</td>
             <td>{{ getAssetTypeName(dc.assetTypeId) }}</td>
             <td>{{ getTaskTypeName(dc.taskTypeId) }}</td>
             <td>{{ dc.comment }}</td>
-            <td>
-              <div class="flexrow">
-                <button class="button flexrow-item" @click="startEdit(dc)" title="Edit">
-                  <edit-2-icon class="icon" />
+            <td class="action flexrow" style="justify-content: center; gap: 0.5rem">
+                <button class="button icon-button" @click="startEdit(dc)" title="Edit">
+                  <edit-2-icon class="icon is-small" size="16" />
                 </button>
-                <button class="button is-danger flexrow-item" @click="deleteComment(dc.id)" title="Delete">
-                  <trash-2-icon class="icon" />
+                <button class="button icon-button is-danger" @click="deleteComment(dc.id)" title="Delete">
+                  <trash-2-icon class="icon is-small" size="16" />
                 </button>
-              </div>
             </td>
           </tr>
         </tbody>
@@ -210,5 +208,37 @@ export default {
   border-radius: 4px;
   background: var(--background);
   color: var(--text);
+}
+
+.datatable-wrapper {
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 0px solid #dbdbdb;
+  border-radius: 4px;
+}
+.datatable {
+  margin-bottom: 0;
+}
+.datatable-head th {
+  position: sticky;
+  top: 0;
+  background: rgb(73, 73, 73); 
+  z-index: 10;
+  box-shadow: 0 0px 0 #1b1b1b;
+}
+:global(.dark) .datatable-head th {
+  background: #2f3136; 
+  color: #444444;
+  box-shadow: 0 0px 0 #1b1b1b;
+}
+.action {
+  width: 100px;
+  text-align: center;
+}
+.icon-button {
+  padding: 0 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
