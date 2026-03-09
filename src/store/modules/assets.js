@@ -11,7 +11,6 @@ import tasksStore from '@/store/modules/tasks'
 import taskStatusStore from '@/store/modules/taskstatus'
 import taskTypesStore from '@/store/modules/tasktypes'
 
-import func from '@/lib/func'
 import { getTaskTypePriorityOfProd } from '@/lib/productions'
 import { minutesToDays } from '@/lib/time'
 import { PAGE_SIZE } from '@/lib/pagination'
@@ -547,7 +546,11 @@ const actions = {
       })
       return Promise.all(createTaskPromises)
         .then(async createdTasks => {
-          if (window.electronAPI && window.electronAPI.getDefaultComments && createdTasks.length > 0) {
+          if (
+            window.electronAPI &&
+            window.electronAPI.getDefaultComments &&
+            createdTasks.length > 0
+          ) {
             try {
               const res = await window.electronAPI.getDefaultComments()
               if (res.success && res.data) {
@@ -555,7 +558,10 @@ const actions = {
                 for (const task of createdTasks) {
                   if (!task) continue
                   const matching = defaultComments.find(
-                    dc => dc.productionId === asset.project_id && dc.assetTypeId === asset.entity_type_id && dc.taskTypeId === task.task_type_id
+                    dc =>
+                      dc.productionId === asset.project_id &&
+                      dc.assetTypeId === asset.entity_type_id &&
+                      dc.taskTypeId === task.task_type_id
                   )
                   if (matching) {
                     const newComment = await dispatch('commentTask', {
@@ -622,11 +628,11 @@ const actions = {
     })
   },
 
-  shareAssets({ }, { production, assetType, assetIds }) {
+  shareAssets({}, { production, assetType, assetIds }) {
     return assetsApi.shareAssets(production, assetType, assetIds)
   },
 
-  unshareAssets({ }, { assetIds }) {
+  unshareAssets({}, { assetIds }) {
     return assetsApi.shareAssets(null, null, assetIds, false)
   },
 
@@ -1145,7 +1151,7 @@ const mutations = {
   [ASSET_CSV_FILE_SELECTED](state, formData) {
     state.assetsCsvFormData = formData
   },
-  [IMPORT_ASSETS_START](state) { },
+  [IMPORT_ASSETS_START](state) {},
   [IMPORT_ASSETS_END](state) {
     state.assetsCsvFormData = null
   },
@@ -1223,7 +1229,7 @@ const mutations = {
     }
   },
 
-  [NEW_TASK_COMMENT_END](state, { comment, taskId }) { },
+  [NEW_TASK_COMMENT_END](state, { comment, taskId }) {},
 
   [SET_ASSET_SEARCH](state, payload) {
     payload.sorting = state.assetSorting

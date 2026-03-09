@@ -324,7 +324,7 @@ export default {
     ]),
 
     isDesktop() {
-      return window && !!window.electronAPI;
+      return window && !!window.electronAPI
     },
 
     logoPath() {

@@ -19,24 +19,39 @@
           </tr>
         </thead>
         <tbody class="datatable-body">
-          <tr v-for="dc in displayedDefaultComments" :key="dc.id" class="datatable-row">
+          <tr
+            v-for="dc in displayedDefaultComments"
+            :key="dc.id"
+            class="datatable-row"
+          >
             <td>{{ getProductionName(dc.productionId) }}</td>
             <td>{{ getAssetTypeName(dc.assetTypeId) }}</td>
             <td>{{ getTaskTypeName(dc.taskTypeId) }}</td>
             <td>{{ dc.comment }}</td>
-            <td class="action flexrow" style="justify-content: center; gap: 0.5rem">
-                <button class="button icon-button" @click="startEdit(dc)" title="Edit">
-                  <edit-2-icon class="icon is-small" size="16" />
-                </button>
-                <button class="button icon-button is-danger" @click="deleteComment(dc.id)" title="Delete">
-                  <trash-2-icon class="icon is-small" size="16" />
-                </button>
+            <td
+              class="action flexrow"
+              style="justify-content: center; gap: 0.5rem"
+            >
+              <button
+                class="button icon-button"
+                @click="startEdit(dc)"
+                title="Edit"
+              >
+                <edit-2-icon class="icon is-small" size="16" />
+              </button>
+              <button
+                class="button icon-button is-danger"
+                @click="deleteComment(dc.id)"
+                title="Delete"
+              >
+                <trash-2-icon class="icon is-small" size="16" />
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    
+
     <edit-default-comment-modal
       :active="isModalActive"
       :comment-to-edit="selectedComment"
@@ -77,30 +92,32 @@ export default {
   },
 
   computed: {
-    ...mapGetters(['assetTypes', 'taskTypes', 'openProductions', 'currentProduction']),
-    
+    ...mapGetters([
+      'assetTypes',
+      'taskTypes',
+      'openProductions',
+      'currentProduction'
+    ]),
+
     assetTypeMap() {
-        return new Map(this.assetTypes.map(at => [at.id, at.name]));
+      return new Map(this.assetTypes.map(at => [at.id, at.name]))
     },
-    
+
     taskTypeMap() {
-        return new Map(this.taskTypes.map(tt => [tt.id, tt.name]));
+      return new Map(this.taskTypes.map(tt => [tt.id, tt.name]))
     },
 
     productionMap() {
-        return new Map(this.openProductions.map(p => [p.id, p.name]));
+      return new Map(this.openProductions.map(p => [p.id, p.name]))
     },
 
     displayedDefaultComments() {
-        return this.defaultComments;
+      return this.defaultComments
     }
   },
 
   async mounted() {
-    await Promise.all([
-      this.loadAssetTypes(),
-      this.loadTaskTypes()
-    ]);
+    await Promise.all([this.loadAssetTypes(), this.loadTaskTypes()])
     this.fetchDefaultComments()
   },
 
@@ -108,24 +125,24 @@ export default {
     ...mapActions(['loadAssetTypes', 'loadTaskTypes']),
 
     getProductionName(id) {
-        return this.productionMap.get(id) || 'Unknown Production';
+      return this.productionMap.get(id) || 'Unknown Production'
     },
 
     getAssetTypeName(id) {
-        return this.assetTypeMap.get(id) || 'Unknown Asset Type';
+      return this.assetTypeMap.get(id) || 'Unknown Asset Type'
     },
 
     getTaskTypeName(id) {
-        return this.taskTypeMap.get(id) || 'Unknown Task Type';
+      return this.taskTypeMap.get(id) || 'Unknown Task Type'
     },
 
     async fetchDefaultComments() {
       try {
-        const response = await window.electronAPI.getDefaultComments();
+        const response = await window.electronAPI.getDefaultComments()
         if (response.success) {
-           this.defaultComments = response.data;
+          this.defaultComments = response.data
         } else {
-           console.error('Failed to fetch default comments:', response.error);
+          console.error('Failed to fetch default comments:', response.error)
         }
       } catch (err) {
         console.error('API Error: ', err)
@@ -137,7 +154,7 @@ export default {
       this.isModalActive = true
       this.modalError = false
     },
-    
+
     closeModal() {
       this.isModalActive = false
     },
@@ -154,40 +171,44 @@ export default {
       try {
         let response
         if (form.id) {
-           response = await window.electronAPI.updateDefaultComment(form.id, form.comment);
+          response = await window.electronAPI.updateDefaultComment(
+            form.id,
+            form.comment
+          )
         } else {
-           // Provide fallback to current production id just in case modal forgot it
-           if (!form.productionId && this.currentProduction) {
-              form.productionId = this.currentProduction.id;
-           }
-           response = await window.electronAPI.createDefaultComment({ ...form });
+          // Provide fallback to current production id just in case modal forgot it
+          if (!form.productionId && this.currentProduction) {
+            form.productionId = this.currentProduction.id
+          }
+          response = await window.electronAPI.createDefaultComment({ ...form })
         }
-        
+
         if (response.success) {
-           this.isModalActive = false;
-           await this.fetchDefaultComments();
+          this.isModalActive = false
+          await this.fetchDefaultComments()
         } else {
-           console.error('Failed to save default comment:', response.error);
-           this.modalError = true;
+          console.error('Failed to save default comment:', response.error)
+          this.modalError = true
         }
       } catch (err) {
         console.error('API save error:', err)
-        this.modalError = true;
+        this.modalError = true
       } finally {
-        this.isSaving = false;
+        this.isSaving = false
       }
     },
 
     async deleteComment(id) {
-       if (!confirm("Are you sure you want to delete this default comment?")) return;
-       try {
-        const response = await window.electronAPI.deleteDefaultComment(id);
+      if (!confirm('Are you sure you want to delete this default comment?'))
+        return
+      try {
+        const response = await window.electronAPI.deleteDefaultComment(id)
         if (response.success) {
-           await this.fetchDefaultComments();
+          await this.fetchDefaultComments()
         }
-       } catch (err) {
-           console.error('Update err: ', err)
-       }
+      } catch (err) {
+        console.error('Update err: ', err)
+      }
     }
   }
 }
@@ -222,12 +243,12 @@ export default {
 .datatable-head th {
   position: sticky;
   top: 0;
-  background: rgb(73, 73, 73); 
+  background: rgb(73, 73, 73);
   z-index: 10;
   box-shadow: 0 0px 0 #1b1b1b;
 }
 :global(.dark) .datatable-head th {
-  background: #2f3136; 
+  background: #2f3136;
   color: #444444;
   box-shadow: 0 0px 0 #1b1b1b;
 }

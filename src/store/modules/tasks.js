@@ -156,11 +156,11 @@ const actions = {
     })
   },
 
-  loadTasks({ }, filters) {
+  loadTasks({}, filters) {
     return tasksApi.getTasks(filters)
   },
 
-  loadOpenTasks({ }, filters) {
+  loadOpenTasks({}, filters) {
     return tasksApi.getOpenTasks(filters)
   },
 
@@ -322,7 +322,7 @@ const actions = {
     }
   },
 
-  deleteAllTasks({ }, { projectId, taskTypeId, taskIds }) {
+  deleteAllTasks({}, { projectId, taskTypeId, taskIds }) {
     return tasksApi.deleteAllTasks(projectId, taskTypeId, taskIds)
   },
 

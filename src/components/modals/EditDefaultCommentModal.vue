@@ -9,83 +9,91 @@
 
     <div class="modal-content">
       <div class="box">
-        <h1 class="title" v-if="isEditing">
-          Edit Default Comment
-        </h1>
-        <h1 class="title" v-else>
-          New Default Comment
-        </h1>
+        <h1 class="title" v-if="isEditing">Edit Default Comment</h1>
+        <h1 class="title" v-else>New Default Comment</h1>
         <form @submit.prevent>
           <div class="field">
-             <label class="label">Production</label>
-             <div class="control">
-               <combobox-production
-                 v-model="form.productionId"
-                 :production-list="productions"
-                 :with-margin="false"
-                 v-if="!isEditing"
-               />
-               <div class="select is-fullwidth" v-else>
-                 <select v-model="form.productionId" disabled>
-                   <option :value="form.productionId">{{ getSelectedProductionName }}</option>
-                 </select>
-               </div>
-             </div>
+            <label class="label">Production</label>
+            <div class="control">
+              <combobox-production
+                v-model="form.productionId"
+                :production-list="productions"
+                :with-margin="false"
+                v-if="!isEditing"
+              />
+              <div class="select is-fullwidth" v-else>
+                <select v-model="form.productionId" disabled>
+                  <option :value="form.productionId">
+                    {{ getSelectedProductionName }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div class="field">
-             <label class="label">Asset Type</label>
-             <div class="control">
-               <div class="select is-fullwidth">
-                 <select v-model="form.assetTypeId" :disabled="isEditing">
-                   <option disabled value="">Select Asset Type...</option>
-                   <option v-for="at in assetTypes" :key="at.id" :value="at.id">{{ at.name }}</option>
-                 </select>
-               </div>
-             </div>
+            <label class="label">Asset Type</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select v-model="form.assetTypeId" :disabled="isEditing">
+                  <option disabled value="">Select Asset Type...</option>
+                  <option v-for="at in assetTypes" :key="at.id" :value="at.id">
+                    {{ at.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <div class="field">
-             <label class="label">Task Type</label>
-             <div class="control">
-               <div class="select is-fullwidth">
-                 <select v-model="form.taskTypeId" :disabled="isEditing">
-                   <option disabled value="">Select Task Type...</option>
-                   <option v-for="tt in taskTypes" :key="tt.id" :value="tt.id">{{ tt.name }}</option>
-                 </select>
-               </div>
-             </div>
+            <label class="label">Task Type</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select v-model="form.taskTypeId" :disabled="isEditing">
+                  <option disabled value="">Select Task Type...</option>
+                  <option v-for="tt in taskTypes" :key="tt.id" :value="tt.id">
+                    {{ tt.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
-          
+
           <div class="field">
-             <label class="label">Default Comment</label>
-             <div class="control">
-               <input class="input" type="text" v-model="form.comment" @keyup.enter="confirmClicked" placeholder="Your default comment..." />
-             </div>
+            <label class="label">Default Comment</label>
+            <div class="control">
+              <input
+                class="input"
+                type="text"
+                v-model="form.comment"
+                @keyup.enter="confirmClicked"
+                placeholder="Your default comment..."
+              />
+            </div>
           </div>
           <div class="field">
-             <div class="control">
-                <div class="post-area">
-                  <checklist
-                      :checklist="form.checklist"
-                      @add-item="onAddChecklistItem"
-                      @insert-item="onInsertChecklistItem"
-                      @remove-task="removeTask"
-                      v-if="form.checklist && form.checklist.length > 0"
+            <div class="control">
+              <div class="post-area">
+                <checklist
+                  :checklist="form.checklist"
+                  @add-item="onAddChecklistItem"
+                  @insert-item="onInsertChecklistItem"
+                  @remove-task="removeTask"
+                  v-if="form.checklist && form.checklist.length > 0"
+                />
+                <div class="flexrow button-row mt1">
+                  <button-simple
+                    :class="{
+                      'flexrow-item': true,
+                      active: form.checklist && form.checklist.length !== 0
+                    }"
+                    icon="list"
+                    title="Add Checklist"
+                    @click="addChecklistEntry(-1)"
                   />
-                  <div class="flexrow button-row mt1">
-                    <button-simple
-                        :class="{
-                          'flexrow-item': true,
-                          active: form.checklist && form.checklist.length !== 0
-                        }"
-                        icon="list"
-                        title="Add Checklist"
-                        @click="addChecklistEntry(-1)"
-                    />
-                  </div>
                 </div>
-             </div>
+              </div>
+            </div>
           </div>
         </form>
 
@@ -168,66 +176,76 @@ export default {
       return this.commentToEdit && this.commentToEdit.id
     },
     errorText() {
-        return this.isEditing ? 'Failed to update comment' : 'Failed to create comment'
+      return this.isEditing
+        ? 'Failed to update comment'
+        : 'Failed to create comment'
     },
     getSelectedProductionName() {
-        const prod = this.productions.find(p => p.id === this.form.productionId);
-        return prod ? prod.name : 'Unknown Production';
+      const prod = this.productions.find(p => p.id === this.form.productionId)
+      return prod ? prod.name : 'Unknown Production'
     }
   },
 
   methods: {
     addChecklistEntry(index) {
-        if (!this.form.checklist) this.form.checklist = []
-        this.onAddChecklistItem({
-            index: index,
-            text: '',
-            frame: -1,
-            revision: -1,
-            checked: false
-        })
+      if (!this.form.checklist) this.form.checklist = []
+      this.onAddChecklistItem({
+        index: index,
+        text: '',
+        frame: -1,
+        revision: -1,
+        checked: false
+      })
     },
-    
+
     onAddChecklistItem(item) {
-        if (!this.form.checklist) this.form.checklist = []
-        delete item.index
-        this.form.checklist.push(item)
+      if (!this.form.checklist) this.form.checklist = []
+      delete item.index
+      this.form.checklist.push(item)
     },
-    
+
     onInsertChecklistItem(item) {
-        if (!this.form.checklist) this.form.checklist = []
-        this.form.checklist.splice(item.index, 0, item)
-        for (let i = 0; i < this.form.checklist.length; i++) {
-           this.form.checklist[i].index = i
-        }
+      if (!this.form.checklist) this.form.checklist = []
+      this.form.checklist.splice(item.index, 0, item)
+      for (let i = 0; i < this.form.checklist.length; i++) {
+        this.form.checklist[i].index = i
+      }
     },
-    
+
     removeTask(item) {
-        this.form.checklist = this.form.checklist.filter(entry => entry !== item)
+      this.form.checklist = this.form.checklist.filter(entry => entry !== item)
     },
 
     confirmClicked() {
-      let prodId = this.form.productionId;
+      let prodId = this.form.productionId
       if (!prodId) {
-          if (this.currentProductionId) prodId = this.currentProductionId;
-          else if (this.productions && this.productions.length > 0) prodId = this.productions[0].id;
+        if (this.currentProductionId) prodId = this.currentProductionId
+        else if (this.productions && this.productions.length > 0)
+          prodId = this.productions[0].id
       }
 
-      if (!prodId || !this.form.assetTypeId || !this.form.taskTypeId || !this.form.comment) {
-         const errorMsg = `Validation failed!\nProdID: ${prodId}\nAssetType: ${this.form.assetTypeId}\nTaskType: ${this.form.taskTypeId}\nComment length: ${this.form.comment ? this.form.comment.length : 0}`;
-         console.error(errorMsg);
-         alert(errorMsg);
-         return; // Simple validation
+      if (
+        !prodId ||
+        !this.form.assetTypeId ||
+        !this.form.taskTypeId ||
+        !this.form.comment
+      ) {
+        const errorMsg = `Validation failed!\nProdID: ${prodId}\nAssetType: ${this.form.assetTypeId}\nTaskType: ${this.form.taskTypeId}\nComment length: ${this.form.comment ? this.form.comment.length : 0}`
+        console.error(errorMsg)
+        alert(errorMsg)
+        return // Simple validation
       }
-      
-      let payload = { ...this.form, productionId: prodId };
+
+      let payload = { ...this.form, productionId: prodId }
       if (payload.checklist) {
-          payload.checklist = payload.checklist.filter(item => item.text && item.text.trim().length > 0)
+        payload.checklist = payload.checklist.filter(
+          item => item.text && item.text.trim().length > 0
+        )
       }
-      
+
       // Strip Vue reactive proxies to prevent structuredClone errors over IPC
       payload = JSON.parse(JSON.stringify(payload))
-      
+
       this.$emit('confirm', payload)
     }
   },
@@ -241,7 +259,9 @@ export default {
           assetTypeId: this.commentToEdit.assetTypeId,
           taskTypeId: this.commentToEdit.taskTypeId,
           comment: this.commentToEdit.comment,
-          checklist: this.commentToEdit.checklist ? JSON.parse(JSON.stringify(this.commentToEdit.checklist)) : []
+          checklist: this.commentToEdit.checklist
+            ? JSON.parse(JSON.stringify(this.commentToEdit.checklist))
+            : []
         }
       } else {
         this.form = {

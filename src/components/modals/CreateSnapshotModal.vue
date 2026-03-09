@@ -26,11 +26,18 @@
         </div>
 
         <div class="field">
-          <label class="label">{{ $t('snapshots.thumbnail', 'Thumbnail') }}</label>
+          <label class="label">{{
+            $t('snapshots.thumbnail', 'Thumbnail')
+          }}</label>
           <div v-if="form.thumbnailPath" class="media-preview-box">
             <img :src="previewUrls.thumbnail" class="preview-media" />
             <br />
-            <button class="button is-danger is-small mt-2" @click="removeMedia('thumbnail')">Remove</button>
+            <button
+              class="button is-danger is-small mt-2"
+              @click="removeMedia('thumbnail')"
+            >
+              Remove
+            </button>
           </div>
           <file-upload
             v-else
@@ -43,11 +50,22 @@
         </div>
 
         <div class="field">
-          <label class="label">{{ $t('snapshots.preview', 'Preview (Video)') }}</label>
+          <label class="label">{{
+            $t('snapshots.preview', 'Preview (Video)')
+          }}</label>
           <div v-if="form.previewPath" class="media-preview-box">
-            <video :src="previewUrls.preview" class="preview-media" controls></video>
+            <video
+              :src="previewUrls.preview"
+              class="preview-media"
+              controls
+            ></video>
             <br />
-            <button class="button is-danger is-small mt-2" @click="removeMedia('preview')">Remove</button>
+            <button
+              class="button is-danger is-small mt-2"
+              @click="removeMedia('preview')"
+            >
+              Remove
+            </button>
           </div>
           <file-upload
             v-else
@@ -65,11 +83,13 @@
             <textarea
               class="textarea"
               v-model="form.message"
-              :placeholder="$t('snapshots.message_placeholder', 'Enter a description...')"
+              :placeholder="
+                $t('snapshots.message_placeholder', 'Enter a description...')
+              "
             ></textarea>
           </div>
         </div>
-        
+
         <p class="help is-info" v-if="isProcessing">
           {{ processingMessage }}
         </p>
@@ -79,7 +99,11 @@
 
         <div class="field is-grouped is-grouped-right mt-4">
           <div class="control">
-             <button @click="cancel" class="button" :disabled="isLoading || isProcessing">
+            <button
+              @click="cancel"
+              class="button"
+              :disabled="isLoading || isProcessing"
+            >
               {{ $t('main.cancel', 'Cancel') }}
             </button>
           </div>
@@ -151,100 +175,108 @@ export default {
 
   methods: {
     async processMediaFile(file, type) {
-      if (!file) return null;
+      if (!file) return null
 
       // Get the native filesystem path via Electron's webUtils
-      let filePath = null;
+      let filePath = null
       if (window.electronAPI && window.electronAPI.getPathForFile) {
-        filePath = window.electronAPI.getPathForFile(file);
+        filePath = window.electronAPI.getPathForFile(file)
       }
       if (!filePath) {
-        console.error(`Cannot get native path for ${type} file`);
-        return null;
+        console.error(`Cannot get native path for ${type} file`)
+        return null
       }
-      
-      this.isProcessing = true;
-      this.processingMessage = `Processing ${type}... Please wait.`;
-      
+
+      this.isProcessing = true
+      this.processingMessage = `Processing ${type}... Please wait.`
+
       try {
         if (window.electronAPI && window.electronAPI.processMedia) {
-          const res = await window.electronAPI.processMedia(filePath, type);
+          const res = await window.electronAPI.processMedia(filePath, type)
           if (res && res.success) {
-            return res.processedPath;
+            return res.processedPath
           } else {
-            console.error(`Error processing ${type}:`, res?.error);
-            this.isError = true;
+            console.error(`Error processing ${type}:`, res?.error)
+            this.isError = true
           }
         }
       } catch (e) {
-        console.error(`Exception processing ${type}:`, e);
-        this.isError = true;
+        console.error(`Exception processing ${type}:`, e)
+        this.isError = true
       } finally {
-        this.isProcessing = false;
-        this.processingMessage = '';
+        this.isProcessing = false
+        this.processingMessage = ''
       }
-      return null;
+      return null
     },
 
     async onThumbnailSelected(formData, rawFile) {
-      const file = rawFile || (formData && formData.get ? formData.get('file') : null);
+      const file =
+        rawFile || (formData && formData.get ? formData.get('file') : null)
       if (file) {
-        if (this.previewUrls.thumbnail) URL.revokeObjectURL(this.previewUrls.thumbnail);
-        this.previewUrls.thumbnail = URL.createObjectURL(file);
-        this.form.thumbnailPath = await this.processMediaFile(file, 'thumbnail');
+        if (this.previewUrls.thumbnail)
+          URL.revokeObjectURL(this.previewUrls.thumbnail)
+        this.previewUrls.thumbnail = URL.createObjectURL(file)
+        this.form.thumbnailPath = await this.processMediaFile(file, 'thumbnail')
       }
     },
 
     async onPreviewSelected(formData, rawFile) {
-      const file = rawFile || (formData && formData.get ? formData.get('file') : null);
+      const file =
+        rawFile || (formData && formData.get ? formData.get('file') : null)
       if (file) {
-        if (this.previewUrls.preview) URL.revokeObjectURL(this.previewUrls.preview);
-        this.previewUrls.preview = URL.createObjectURL(file);
-        this.form.previewPath = await this.processMediaFile(file, 'preview');
+        if (this.previewUrls.preview)
+          URL.revokeObjectURL(this.previewUrls.preview)
+        this.previewUrls.preview = URL.createObjectURL(file)
+        this.form.previewPath = await this.processMediaFile(file, 'preview')
       }
     },
 
     async removeMedia(type) {
       if (type === 'thumbnail' && this.form.thumbnailPath) {
         if (window.electronAPI && window.electronAPI.cleanupMedia) {
-          await window.electronAPI.cleanupMedia([this.form.thumbnailPath]);
+          await window.electronAPI.cleanupMedia([this.form.thumbnailPath])
         }
-        this.form.thumbnailPath = null;
+        this.form.thumbnailPath = null
         if (this.previewUrls.thumbnail) {
-          URL.revokeObjectURL(this.previewUrls.thumbnail);
-          this.previewUrls.thumbnail = null;
+          URL.revokeObjectURL(this.previewUrls.thumbnail)
+          this.previewUrls.thumbnail = null
         }
-        if (this.$refs.thumbnailUpload) this.$refs.thumbnailUpload.reset();
+        if (this.$refs.thumbnailUpload) this.$refs.thumbnailUpload.reset()
       } else if (type === 'preview' && this.form.previewPath) {
         if (window.electronAPI && window.electronAPI.cleanupMedia) {
-          await window.electronAPI.cleanupMedia([this.form.previewPath]);
+          await window.electronAPI.cleanupMedia([this.form.previewPath])
         }
-        this.form.previewPath = null;
+        this.form.previewPath = null
         if (this.previewUrls.preview) {
-          URL.revokeObjectURL(this.previewUrls.preview);
-          this.previewUrls.preview = null;
+          URL.revokeObjectURL(this.previewUrls.preview)
+          this.previewUrls.preview = null
         }
-        if (this.$refs.previewUpload) this.$refs.previewUpload.reset();
+        if (this.$refs.previewUpload) this.$refs.previewUpload.reset()
       }
     },
 
     async cancel() {
-      const pathsToClean = [];
-      if (this.form.thumbnailPath) pathsToClean.push(this.form.thumbnailPath);
-      if (this.form.previewPath) pathsToClean.push(this.form.previewPath);
-      
-      if (pathsToClean.length > 0 && window.electronAPI && window.electronAPI.cleanupMedia) {
-        await window.electronAPI.cleanupMedia(pathsToClean);
+      const pathsToClean = []
+      if (this.form.thumbnailPath) pathsToClean.push(this.form.thumbnailPath)
+      if (this.form.previewPath) pathsToClean.push(this.form.previewPath)
+
+      if (
+        pathsToClean.length > 0 &&
+        window.electronAPI &&
+        window.electronAPI.cleanupMedia
+      ) {
+        await window.electronAPI.cleanupMedia(pathsToClean)
       }
-      
-      this.$emit('cancel');
-      this.reset();
+
+      this.$emit('cancel')
+      this.reset()
     },
 
     async submitSnapshot() {
       this.isLoading = true
       this.isError = false
-      
+
       try {
         if (window.electronAPI && window.electronAPI.submitSnapshot) {
           const response = await window.electronAPI.submitSnapshot({
@@ -254,7 +286,7 @@ export default {
             thumbnailPath: this.form.thumbnailPath,
             previewPath: this.form.previewPath,
             userId: this.user ? this.user.id : null,
-            username: this.user ? (this.user.full_name || this.user.name) : null
+            username: this.user ? this.user.full_name || this.user.name : null
           })
 
           if (response && response.success) {

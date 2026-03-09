@@ -631,8 +631,15 @@ export default {
         .then(() => {
           this.loading.edit = false
           this.modals.edit = false
-          if (linkedTaskId && form.id && window.electronAPI && window.electronAPI.linkAssetTask) {
-            window.electronAPI.linkAssetTask({ assetId: form.id, taskId: linkedTaskId }).catch(console.error)
+          if (
+            linkedTaskId &&
+            form.id &&
+            window.electronAPI &&
+            window.electronAPI.linkAssetTask
+          ) {
+            window.electronAPI
+              .linkAssetTask({ assetId: form.id, taskId: linkedTaskId })
+              .catch(console.error)
           }
         })
         .catch(err => {

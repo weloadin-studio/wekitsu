@@ -24,7 +24,7 @@
               :narrow="true"
               :with-margin="false"
               :color-only="true"
-              @update:modelValue="onStatusChange"
+              @update:model-value="onStatusChange"
             />
           </div>
           <span class="filler" v-if="contactSheet"></span>

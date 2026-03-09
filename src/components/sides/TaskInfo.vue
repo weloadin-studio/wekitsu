@@ -90,29 +90,53 @@
           </div>
           <div class="wekitsulink">
             <!-- {{ task.id }} -->
-            <task-path-button :task-id="task.id" :asset-type="task.entity_type_name" />
+            <task-path-button
+              :task-id="task.id"
+              :asset-type="task.entity_type_name"
+            />
           </div>
 
-          <div class="linked-assets-section mt1" v-if="linkedAssets && linkedAssets.length > 0">
+          <div
+            class="linked-assets-section mt1"
+            v-if="linkedAssets && linkedAssets.length > 0"
+          >
             <div class="flexrow">
-              <span class="flexrow-item ml1" style="font-weight: 600; font-size: 0.9em; text-transform: uppercase;">
+              <span
+                class="flexrow-item ml1"
+                style="
+                  font-weight: 600;
+                  font-size: 0.9em;
+                  text-transform: uppercase;
+                "
+              >
                 {{ $t('tasks.fields.linked_assets') || 'Linked Assets' }}
               </span>
             </div>
-            <div class="pa1 pt0 flexrow" style="gap: 8px; flex-wrap: wrap;">
+            <div class="pa1 pt0 flexrow" style="gap: 8px; flex-wrap: wrap">
               <template v-for="link in linkedAssets" :key="link.id">
-                <div v-if="link.assetId" style="display: flex; align-items: center;">
-                  <router-link 
+                <div
+                  v-if="link.assetId"
+                  style="display: flex; align-items: center"
+                >
+                  <router-link
                     :to="`/productions/${currentProductionId}/assets/${link.assetId}`"
                     class="button is-small is-outlined"
-                    style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;"
+                    style="
+                      border-top-right-radius: 0;
+                      border-bottom-right-radius: 0;
+                      border-right: none;
+                    "
                   >
                     <kitsu-icon name="asset" class="mr1" />
                     {{ link.assetName || 'View Linked Asset' }}
                   </router-link>
-                  <button 
-                    class="button is-small is-outlined is-danger" 
-                    style="border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 8px;"
+                  <button
+                    class="button is-small is-outlined is-danger"
+                    style="
+                      border-top-left-radius: 0;
+                      border-bottom-left-radius: 0;
+                      padding: 0 8px;
+                    "
                     title="Delete Link"
                     @click="deleteLinkedAsset(link.assetId)"
                   >
@@ -936,38 +960,38 @@ export default {
     },
 
     async fetchLinkedAssets(taskId) {
-      if (!window.electronAPI || !window.electronAPI.getLinkedAssets) return;
-      this.linkedAssetsLoading = true;
+      if (!window.electronAPI || !window.electronAPI.getLinkedAssets) return
+      this.linkedAssetsLoading = true
       try {
-        const response = await window.electronAPI.getLinkedAssets(taskId);
+        const response = await window.electronAPI.getLinkedAssets(taskId)
         if (response.success && response.data) {
-          this.linkedAssets = response.data;
+          this.linkedAssets = response.data
         } else {
-          this.linkedAssets = [];
+          this.linkedAssets = []
         }
       } catch (err) {
-        console.error("Failed to fetch linked assets", err);
-        this.linkedAssets = [];
+        console.error('Failed to fetch linked assets', err)
+        this.linkedAssets = []
       } finally {
-        this.linkedAssetsLoading = false;
+        this.linkedAssetsLoading = false
       }
     },
 
     async deleteLinkedAsset(assetId) {
-      if (!window.electronAPI || !window.electronAPI.deleteLinkedAsset) return;
+      if (!window.electronAPI || !window.electronAPI.deleteLinkedAsset) return
       if (confirm('Are you sure you want to remove this linked asset?')) {
-        this.linkedAssetsLoading = true;
+        this.linkedAssetsLoading = true
         try {
-          const response = await window.electronAPI.deleteLinkedAsset(assetId);
+          const response = await window.electronAPI.deleteLinkedAsset(assetId)
           if (response.success) {
-            this.fetchLinkedAssets(this.task.id);
+            this.fetchLinkedAssets(this.task.id)
           } else {
-            console.error("Failed to delete linked asset", response.error);
+            console.error('Failed to delete linked asset', response.error)
           }
         } catch (err) {
-          console.error("Error deleting linked asset", err);
+          console.error('Error deleting linked asset', err)
         } finally {
-          this.linkedAssetsLoading = false;
+          this.linkedAssetsLoading = false
         }
       }
     },

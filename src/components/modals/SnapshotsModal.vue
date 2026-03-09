@@ -30,24 +30,36 @@
           <table class="datatable is-fullwidth">
             <thead class="datatable-head">
               <tr>
-                <th class="thumbnail datatable-row-header">{{ $t('snapshots.thumbnail', 'Thumbnail') }}</th>
-                <th class="date datatable-row-header">{{ $t('snapshots.created_at', 'Created At') }}</th>
-                <th class="type datatable-row-header">{{ $t('snapshots.type', 'Type') }}</th>
-                <th class="author datatable-row-header">{{ $t('snapshots.author', 'Author') }}</th>
-                <th class="message datatable-row-header">{{ $t('snapshots.message', 'Message') }}</th>
-                <th class="action datatable-row-header">{{ $t('main.actions', 'Actions') }}</th>
+                <th class="thumbnail datatable-row-header">
+                  {{ $t('snapshots.thumbnail', 'Thumbnail') }}
+                </th>
+                <th class="date datatable-row-header">
+                  {{ $t('snapshots.created_at', 'Created At') }}
+                </th>
+                <th class="type datatable-row-header">
+                  {{ $t('snapshots.type', 'Type') }}
+                </th>
+                <th class="author datatable-row-header">
+                  {{ $t('snapshots.author', 'Author') }}
+                </th>
+                <th class="message datatable-row-header">
+                  {{ $t('snapshots.message', 'Message') }}
+                </th>
+                <th class="action datatable-row-header">
+                  {{ $t('main.actions', 'Actions') }}
+                </th>
               </tr>
             </thead>
             <tbody class="datatable-body">
-              <tr 
-                v-for="snapshot in filteredSnapshots" 
+              <tr
+                v-for="snapshot in filteredSnapshots"
                 :key="snapshot.commitId"
                 class="datatable-row"
               >
                 <td class="thumbnail">
                   <div
                     class="thumbnail-container"
-                    @mouseenter="(e) => showPreview(e, snapshot)"
+                    @mouseenter="e => showPreview(e, snapshot)"
                     @mouseleave="hidePreview"
                     @mousemove="updatePreviewPos"
                   >
@@ -66,10 +78,22 @@
                   {{ formatDate(snapshot.createdAt) }}
                 </td>
                 <td class="type">
-                  <span class="tag" :class="{ 'is-warning': snapshot.type === 'source', 'is-success': snapshot.type === 'exports' || snapshot.type === 'export' }">{{ snapshot.type }}</span>
+                  <span
+                    class="tag"
+                    :class="{
+                      'is-warning': snapshot.type === 'source',
+                      'is-success':
+                        snapshot.type === 'exports' ||
+                        snapshot.type === 'export'
+                    }"
+                    >{{ snapshot.type }}</span
+                  >
                 </td>
                 <td class="author">
-                  <router-link v-if="snapshot.userId" :to="`/people/${snapshot.userId}`">
+                  <router-link
+                    v-if="snapshot.userId"
+                    :to="`/people/${snapshot.userId}`"
+                  >
                     {{ snapshot.username || snapshot.userId }}
                   </router-link>
                   <span v-else>{{ snapshot.username || 'System' }}</span>
@@ -78,7 +102,10 @@
                   {{ snapshot.message }}
                 </td>
                 <td class="action">
-                  <div class="field is-grouped" style="justify-content: center; gap: 0.5rem; display: flex;">
+                  <div
+                    class="field is-grouped"
+                    style="justify-content: center; gap: 0.5rem; display: flex"
+                  >
                     <a
                       v-if="snapshot.zipUrl"
                       :href="snapshot.zipUrl"
@@ -90,16 +117,16 @@
                       <icon-download class="icon is-small" size="16" />
                     </a>
                     <button
-                       class="button icon-button is-warning"
-                       title="Rollback"
-                       @click="confirmRollback(snapshot)"
+                      class="button icon-button is-warning"
+                      title="Rollback"
+                      @click="confirmRollback(snapshot)"
                     >
                       <icon-rotate-ccw class="icon is-small" size="16" />
                     </button>
                     <button
-                       class="button icon-button is-danger"
-                       title="Delete"
-                       @click="confirmDelete(snapshot)"
+                      class="button icon-button is-danger"
+                      title="Delete"
+                      @click="confirmDelete(snapshot)"
                     >
                       <icon-trash class="icon is-small" size="16" />
                     </button>
@@ -127,35 +154,35 @@
         </div>
       </div>
     </div>
-    
+
     <confirm-modal
       :active="showConfirm"
       :text="confirmText"
-      :confirmButtonText="confirmButtonText"
-      :isLoading="isActionLoading"
+      :confirm-button-text="confirmButtonText"
+      :is-loading="isActionLoading"
       @cancel="cancelAction"
       @confirm="performAction"
     />
 
     <Teleport to="body">
-      <div 
-        v-if="hoveredSnapshot" 
+      <div
+        v-if="hoveredSnapshot"
         class="snapshot-hover-widget"
         :style="{ top: hoverPos.y + 'px', left: hoverPos.x + 'px' }"
       >
-        <video 
-          v-if="hoveredSnapshot.previewUrl" 
-          :src="hoveredSnapshot.previewUrl" 
-          autoplay 
-          loop 
-          muted 
+        <video
+          v-if="hoveredSnapshot.previewUrl"
+          :src="hoveredSnapshot.previewUrl"
+          autoplay
+          loop
+          muted
           playsinline
           class="hover-video"
         ></video>
-        <img 
-          v-else-if="hoveredSnapshot.thumbnailUrl" 
-          :src="hoveredSnapshot.thumbnailUrl" 
-          class="hover-image" 
+        <img
+          v-else-if="hoveredSnapshot.thumbnailUrl"
+          :src="hoveredSnapshot.thumbnailUrl"
+          class="hover-image"
         />
       </div>
     </Teleport>
@@ -166,8 +193,8 @@
 import { modalMixin } from '@/components/modals/base_modal'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
 import { formatDate } from '@/lib/time'
-import { 
-  Download as IconDownload, 
+import {
+  Download as IconDownload,
   Image as IconImage,
   Trash2 as IconTrash,
   RotateCcw as IconRotateCcw
@@ -232,12 +259,12 @@ export default {
       // If API returns 'exports' (plural) and dropdown is 'export' (singular) or 'exports' (plural), need to match.
       // Easiest is to loosely match check.
       return this.snapshots.filter(s => {
-          if (this.filterType === 'all') return true
-          // If dropdown is 'export' and data is 'exports' or vice versa
-          if (this.filterType === 'export' || this.filterType === 'exports') {
-             return s.type === 'export' || s.type === 'exports'
-          }
-          return s.type === this.filterType
+        if (this.filterType === 'all') return true
+        // If dropdown is 'export' and data is 'exports' or vice versa
+        if (this.filterType === 'export' || this.filterType === 'exports') {
+          return s.type === 'export' || s.type === 'exports'
+        }
+        return s.type === this.filterType
       })
     }
   },
@@ -245,14 +272,20 @@ export default {
   methods: {
     confirmDelete(snapshot) {
       this.pendingAction = { type: 'delete', snapshot }
-      this.confirmText = this.$t('snapshots.confirm_delete', 'Are you sure you want to delete this snapshot?')
+      this.confirmText = this.$t(
+        'snapshots.confirm_delete',
+        'Are you sure you want to delete this snapshot?'
+      )
       this.confirmButtonText = this.$t('main.delete', 'Delete')
       this.showConfirm = true
     },
 
     confirmRollback(snapshot) {
       this.pendingAction = { type: 'rollback', snapshot }
-      this.confirmText = this.$t('snapshots.confirm_rollback', 'Are you sure you want to rollback to this snapshot? Current state will be lost.')
+      this.confirmText = this.$t(
+        'snapshots.confirm_rollback',
+        'Are you sure you want to rollback to this snapshot? Current state will be lost.'
+      )
       this.confirmButtonText = this.$t('snapshots.rollback', 'Rollback')
       this.showConfirm = true
     },
@@ -274,11 +307,17 @@ export default {
         let response
         if (type === 'delete') {
           if (window.electronAPI && window.electronAPI.deleteSnapshot) {
-             response = await window.electronAPI.deleteSnapshot(this.taskId, commitId)
+            response = await window.electronAPI.deleteSnapshot(
+              this.taskId,
+              commitId
+            )
           }
         } else if (type === 'rollback') {
           if (window.electronAPI && window.electronAPI.rollbackSnapshot) {
-             response = await window.electronAPI.rollbackSnapshot(this.taskId, commitId)
+            response = await window.electronAPI.rollbackSnapshot(
+              this.taskId,
+              commitId
+            )
           }
         }
 
@@ -307,7 +346,6 @@ export default {
 
       // Client-side filtering only, load everything once.
       // API does not seem to support pagination either based on "forget about pagination"
-      const url = `/wekitsu-api/snapshots/${this.taskId}`
 
       try {
         if (window.electronAPI && window.electronAPI.getSnapshots) {
@@ -317,11 +355,11 @@ export default {
               this.snapshots = response.data
             }
           } else {
-             // If not found, just empty list
-             if (response.status !== 404) {
-               console.error('Failed to load snapshots:', response.error)
-               this.isError = true
-             }
+            // If not found, just empty list
+            if (response.status !== 404) {
+              console.error('Failed to load snapshots:', response.error)
+              this.isError = true
+            }
           }
         }
       } catch (e) {
@@ -342,39 +380,39 @@ export default {
     },
 
     showPreview(event, snapshot) {
-      if (!snapshot.thumbnailUrl && !snapshot.previewUrl) return;
-      
-      this.hoveredSnapshot = snapshot;
-      this.updatePreviewPos(event);
+      if (!snapshot.thumbnailUrl && !snapshot.previewUrl) return
+
+      this.hoveredSnapshot = snapshot
+      this.updatePreviewPos(event)
     },
 
     updatePreviewPos(event) {
-      if (!this.hoveredSnapshot) return;
-      
-      const xOffset = 20;
-      const yOffset = -50;
-      
+      if (!this.hoveredSnapshot) return
+
+      const xOffset = 20
+      const yOffset = -50
+
       // Basic positioning
-      let x = event.clientX + xOffset;
-      let y = event.clientY + yOffset;
-      
+      let x = event.clientX + xOffset
+      let y = event.clientY + yOffset
+
       // Determine approximate dimensions to prevent off-screen rendering
       // Usually the video/image will be max ~800px wide
-      const widgetWidth = 800;
-      const widgetHeight = 600;
-      
+      const widgetWidth = 800
+      const widgetHeight = 600
+
       if (x + widgetWidth > window.innerWidth) {
-        x = event.clientX - widgetWidth - 10;
+        x = event.clientX - widgetWidth - 10
       }
       if (y + widgetHeight > window.innerHeight) {
-        y = window.innerHeight - widgetHeight - 10;
+        y = window.innerHeight - widgetHeight - 10
       }
-      
-      this.hoverPos = { x, y };
+
+      this.hoverPos = { x, y }
     },
 
     hidePreview() {
-      this.hoveredSnapshot = null;
+      this.hoveredSnapshot = null
     }
   },
 
@@ -388,7 +426,6 @@ export default {
   }
 }
 </script>
-
 
 <style lang="scss" scoped>
 .modal-content {
@@ -511,7 +548,8 @@ export default {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
-.hover-video, .hover-image {
+.hover-video,
+.hover-image {
   max-width: 100%;
   max-height: 768px;
   border-radius: 4px;
@@ -519,7 +557,13 @@ export default {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

@@ -99,7 +99,7 @@
                 :narrow="true"
                 :with-margin="false"
                 :color-only="true"
-                @update:modelValue="onStatusChange(task, $event)"
+                @update:model-value="onStatusChange(task, $event)"
               />
             </td>
 
@@ -108,7 +108,9 @@
               <select
                 class="inline-input"
                 :value="getTask(task.id).priority || 0"
-                @change="onPriorityChange(getTask(task.id), $event.target.value)"
+                @change="
+                  onPriorityChange(getTask(task.id), $event.target.value)
+                "
               >
                 <option value="0">{{ $t('tasks.priority.normal') }}</option>
                 <option value="1">{{ $t('tasks.priority.high') }}</option>
@@ -150,7 +152,7 @@
                 :with-margin="false"
                 :can-delete="true"
                 :utc="true"
-                @update:modelValue="onStartDateChange(task, $event)"
+                @update:model-value="onStartDateChange(task, $event)"
               />
             </td>
 
@@ -161,7 +163,7 @@
                 :with-margin="false"
                 :can-delete="true"
                 :utc="true"
-                @update:modelValue="onDueDateChange(task, $event)"
+                @update:model-value="onDueDateChange(task, $event)"
               />
             </td>
 
@@ -211,7 +213,6 @@ import { formatListMixin } from '@/components/mixins/format'
 
 import ComboboxStatus from '@/components/widgets/ComboboxStatus.vue'
 import DateField from '@/components/widgets/DateField.vue'
-import PeopleAvatar from '@/components/widgets/PeopleAvatar.vue'
 import PeopleField from '@/components/widgets/PeopleField.vue'
 import TableInfo from '@/components/widgets/TableInfo.vue'
 import TaskTypeCell from '@/components/cells/TaskTypeCell.vue'
@@ -224,7 +225,6 @@ export default {
   components: {
     ComboboxStatus,
     DateField,
-    PeopleAvatar,
     PeopleField,
     TableInfo,
     TaskTypeCell
@@ -360,9 +360,7 @@ export default {
     getAssigneeObjects(entry) {
       const task = this.getTask(entry.id) || entry
       if (!task || !task.assignees) return []
-      return task.assignees
-        .map(id => this.personMap.get(id))
-        .filter(Boolean)
+      return task.assignees.map(id => this.personMap.get(id)).filter(Boolean)
     },
 
     getTaskStatusList(task) {
@@ -530,7 +528,9 @@ export default {
     async onBulkAssigneesChange(person) {
       if (!person) return
       try {
-        const taskIds = this.entries.map(task => (this.getTask(task.id) || task).id)
+        const taskIds = this.entries.map(
+          task => (this.getTask(task.id) || task).id
+        )
         await this.$store.dispatch('assignSelectedTasks', {
           personId: person.id,
           taskIds

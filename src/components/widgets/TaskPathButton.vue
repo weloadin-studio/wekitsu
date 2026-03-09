@@ -1,16 +1,16 @@
 <template>
   <div class="task-path-button-wrapper">
-    <button 
-      v-if="path" 
-      class="button icon-button" 
+    <button
+      v-if="path"
+      class="button icon-button"
       :class="workspaceStatus ? 'is-linked-btn' : 'is-unlinked-btn'"
-      :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'" 
+      :title="workspaceStatus ? 'Unlink Workspace' : 'Link Workspace'"
       @click.stop="toggleWorkspaceLink"
     >
-      <UnlinkIcon v-if="workspaceStatus" class="icon is-small" size="16" />
-      <LinkIcon v-else class="icon is-small" size="16" />
+      <unlink-icon v-if="workspaceStatus" class="icon is-small" size="16" />
+      <link-icon v-else class="icon is-small" size="16" />
     </button>
-    
+
     <button
       class="button icon-button"
       :class="{ 'is-loading': loading }"
@@ -18,16 +18,26 @@
       @click.stop="handleClick"
       :disabled="loading || (!!path && !workspaceStatus)"
     >
-      <FolderOpenIcon v-if="path" class="icon is-small" size="16" />
-      <FolderPlusIcon v-else class="icon is-small" size="16" />
+      <folder-open-icon v-if="path" class="icon is-small" size="16" />
+      <folder-plus-icon v-else class="icon is-small" size="16" />
     </button>
-    
+
     <template v-if="path">
-      <button class="button icon-button" title="Snapshots" @click.stop="showSnapshotsModal = true" :disabled="!workspaceStatus">
-        <DatabaseIcon class="icon is-small" size="16" />
+      <button
+        class="button icon-button"
+        title="Snapshots"
+        @click.stop="showSnapshotsModal = true"
+        :disabled="!workspaceStatus"
+      >
+        <database-icon class="icon is-small" size="16" />
       </button>
-      <button class="button icon-button" title="Create Snapshot" @click.stop="showCreateSnapshotModal = true" :disabled="!workspaceStatus">
-        <CopyPlusIcon class="icon is-small" size="16" />
+      <button
+        class="button icon-button"
+        title="Create Snapshot"
+        @click.stop="showCreateSnapshotModal = true"
+        :disabled="!workspaceStatus"
+      >
+        <copy-plus-icon class="icon is-small" size="16" />
       </button>
     </template>
 
@@ -37,13 +47,13 @@
 
     <snapshots-modal
       :active="showSnapshotsModal"
-      :taskId="taskId"
+      :task-id="taskId"
       @cancel="showSnapshotsModal = false"
     />
 
     <create-snapshot-modal
       :active="showCreateSnapshotModal"
-      :taskId="taskId"
+      :task-id="taskId"
       @cancel="showCreateSnapshotModal = false"
       @confirm="onSnapshotCreated"
     />
@@ -53,14 +63,20 @@
 <script>
 import SnapshotsModal from '@/components/modals/SnapshotsModal.vue'
 import CreateSnapshotModal from '@/components/modals/CreateSnapshotModal.vue'
-import { RefreshCwIcon, UnlinkIcon, LinkIcon, FolderOpenIcon, FolderPlusIcon, DatabaseIcon, CopyPlusIcon } from 'lucide-vue-next'
+import {
+  UnlinkIcon,
+  LinkIcon,
+  FolderOpenIcon,
+  FolderPlusIcon,
+  DatabaseIcon,
+  CopyPlusIcon
+} from 'lucide-vue-next'
 
 export default {
   name: 'task-path-button',
   components: {
     SnapshotsModal,
     CreateSnapshotModal,
-    RefreshCwIcon,
     UnlinkIcon,
     LinkIcon,
     FolderOpenIcon,
@@ -104,9 +120,14 @@ export default {
     path: {
       immediate: true,
       async handler(newPath) {
-        if (newPath && window.electronAPI && window.electronAPI.checkWorkspacePath) {
+        if (
+          newPath &&
+          window.electronAPI &&
+          window.electronAPI.checkWorkspacePath
+        ) {
           try {
-            this.workspaceStatus = await window.electronAPI.checkWorkspacePath(newPath)
+            this.workspaceStatus =
+              await window.electronAPI.checkWorkspacePath(newPath)
           } catch (err) {
             console.error('Failed to check workspace path:', err)
             this.workspaceStatus = false
@@ -161,11 +182,11 @@ export default {
       this.loading = true
       try {
         if (window.electronAPI && window.electronAPI.createAsset) {
-          const response = await window.electronAPI.createAsset({ 
+          const response = await window.electronAPI.createAsset({
             id: this.taskId,
             assetType: this.assetType
           })
-          
+
           if (response.success && response.data) {
             // The API returns the wekitsu_tasks record which has `path`
             if (response.data.path) {
@@ -178,7 +199,9 @@ export default {
             console.error('Failed to create task folder')
           }
         } else {
-           console.error('Failed to create task folder: electronAPI not available')
+          console.error(
+            'Failed to create task folder: electronAPI not available'
+          )
         }
       } catch (e) {
         console.error('Error creating task folder:', e)
@@ -192,39 +215,47 @@ export default {
       this.showSnapshotsModal = true
     },
     async toggleWorkspaceLink() {
-      if (!this.path || !window.electronAPI) return;
-      
-      this.loading = true;
+      if (!this.path || !window.electronAPI) return
+
+      this.loading = true
       try {
         if (this.workspaceStatus) {
           if (window.electronAPI.unlinkFromWorkspace) {
-            const res = await window.electronAPI.unlinkFromWorkspace(this.taskId, this.path);
+            const res = await window.electronAPI.unlinkFromWorkspace(
+              this.taskId,
+              this.path
+            )
             if (!res.success) {
               if (!res.cancelled && res.error) {
-                alert(`Failed to unlink workspace:\n${res.error}`);
+                alert(`Failed to unlink workspace:\n${res.error}`)
               }
-              return; // Do not update status
+              return // Do not update status
             }
           }
         } else {
           if (window.electronAPI.linkToWorkspace) {
-            const res = await window.electronAPI.linkToWorkspace(this.taskId, this.path);
+            const res = await window.electronAPI.linkToWorkspace(
+              this.taskId,
+              this.path
+            )
             if (!res.success) {
               if (!res.cancelled && res.error) {
-                alert(`Failed to link workspace:\n${res.error}`);
+                alert(`Failed to link workspace:\n${res.error}`)
               }
-              return; // Do not update status
+              return // Do not update status
             }
           }
         }
-        
+
         if (window.electronAPI.checkWorkspacePath) {
-          this.workspaceStatus = await window.electronAPI.checkWorkspacePath(this.path);
+          this.workspaceStatus = await window.electronAPI.checkWorkspacePath(
+            this.path
+          )
         }
       } catch (err) {
-        console.error('Failed to toggle workspace link:', err);
+        console.error('Failed to toggle workspace link:', err)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     }
   }

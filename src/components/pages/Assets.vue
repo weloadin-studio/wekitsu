@@ -614,8 +614,16 @@ export default {
           this.resetLightEditModal()
           this.$refs['edit-asset-modal'].focusName()
           this.success.edit = true
-          if (linkedTaskId && asset && asset.id && window.electronAPI && window.electronAPI.linkAssetTask) {
-            window.electronAPI.linkAssetTask({ assetId: asset.id, taskId: linkedTaskId }).catch(console.error)
+          if (
+            linkedTaskId &&
+            asset &&
+            asset.id &&
+            window.electronAPI &&
+            window.electronAPI.linkAssetTask
+          ) {
+            window.electronAPI
+              .linkAssetTask({ assetId: asset.id, taskId: linkedTaskId })
+              .catch(console.error)
           }
         })
         .catch(err => {
@@ -641,8 +649,16 @@ export default {
           this.loading.edit = false
           this.modals.isNewDisplayed = false
           this.applySearchFromUrl(false)
-          if (linkedTaskId && asset && asset.id && window.electronAPI && window.electronAPI.linkAssetTask) {
-            window.electronAPI.linkAssetTask({ assetId: asset.id, taskId: linkedTaskId }).catch(console.error)
+          if (
+            linkedTaskId &&
+            asset &&
+            asset.id &&
+            window.electronAPI &&
+            window.electronAPI.linkAssetTask
+          ) {
+            window.electronAPI
+              .linkAssetTask({ assetId: asset.id, taskId: linkedTaskId })
+              .catch(console.error)
           }
         })
         .catch(err => {

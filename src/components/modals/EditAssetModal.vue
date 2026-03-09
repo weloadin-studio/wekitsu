@@ -25,25 +25,35 @@
               v-model="form.entity_type_id"
             />
           </div>
-          <div v-if="existingLinkedTask" class="notification is-info is-light mt1 flexrow">
-            <span class="flexrow-item filler" style="display: flex; align-items: center;">
-              Currently linked to task: 
-              <router-link 
-                v-if="existingLinkedTaskData && existingLinkedTaskData.projectId && existingLinkedTaskData.entityId"
+          <div
+            v-if="existingLinkedTask"
+            class="notification is-info is-light mt1 flexrow"
+          >
+            <span
+              class="flexrow-item filler"
+              style="display: flex; align-items: center"
+            >
+              Currently linked to task:
+              <router-link
+                v-if="
+                  existingLinkedTaskData &&
+                  existingLinkedTaskData.projectId &&
+                  existingLinkedTaskData.entityId
+                "
                 :to="`/productions/${existingLinkedTaskData.projectId}/assets/${existingLinkedTaskData.entityId}`"
                 class="ml-1"
-                style="font-weight: bold; text-decoration: underline;"
+                style="font-weight: bold; text-decoration: underline"
                 @click="$emit('cancel')"
               >
                 {{ existingLinkedTaskName }}
               </router-link>
               <strong v-else class="ml-1">{{ existingLinkedTaskName }}</strong>
             </span>
-            <button 
-              class="button is-small is-danger is-outlined flexrow-item" 
-              @click="deleteExistingLink" 
+            <button
+              class="button is-small is-danger is-outlined flexrow-item"
+              @click="deleteExistingLink"
               title="Delete Link"
-              style="margin-left: 10px;"
+              style="margin-left: 10px"
             >
               <x-icon size="14" class="mr-1" />
               Remove Link
@@ -291,9 +301,11 @@ export default {
 
     linkedTaskTypeOptions() {
       if (!this.linkedAssetId) return [{ label: 'None', value: null }]
-      const selectedAsset = this.linkedAssetsList.find(a => a.id === this.linkedAssetId)
+      const selectedAsset = this.linkedAssetsList.find(
+        a => a.id === this.linkedAssetId
+      )
       if (!selectedAsset) return [{ label: 'None', value: null }]
-      
+
       const taskTypeIds = new Set(selectedAsset.tasks.map(t => t.task_type_id))
       const options = Array.from(taskTypeIds).map(id => {
         const type = this.$store.getters.taskTypeMap.get(id)
@@ -323,11 +335,15 @@ export default {
     },
 
     getLinkedTaskId() {
-      if (!this.linkedTaskTypeId || !this.linkedAssetId) return null;
-      const selectedAsset = this.linkedAssetsList.find(a => a.id === this.linkedAssetId);
-      if (!selectedAsset) return null;
-      const task = selectedAsset.tasks.find(t => t.task_type_id === this.linkedTaskTypeId);
-      return task ? task.id : null;
+      if (!this.linkedTaskTypeId || !this.linkedAssetId) return null
+      const selectedAsset = this.linkedAssetsList.find(
+        a => a.id === this.linkedAssetId
+      )
+      if (!selectedAsset) return null
+      const task = selectedAsset.tasks.find(
+        t => t.task_type_id === this.linkedTaskTypeId
+      )
+      return task ? task.id : null
     },
 
     confirmAndStayClicked() {
@@ -381,7 +397,7 @@ export default {
           : null
         this.form.data = {}
         this.form.is_shared = 'false'
-        
+
         this.linkedProductionId = null
         this.linkedAssetId = null
         this.linkedTaskTypeId = null
@@ -401,7 +417,7 @@ export default {
             } || {},
           is_shared: String(this.assetToEdit.is_shared === true)
         }
-        
+
         this.linkedProductionId = null
         this.linkedAssetId = null
         this.linkedTaskTypeId = null
@@ -409,13 +425,13 @@ export default {
         this.fetchExistingLinkedTask()
       }
     },
-    
+
     async fetchExistingLinkedTask() {
       if (!this.assetToEdit || !this.assetToEdit.id) return
       this.existingLinkedTask = null
       this.existingLinkedTaskName = ''
       this.existingLinkedTaskData = null
-      
+
       if (!window.electronAPI || !window.electronAPI.getLinkedTask) return
       try {
         const res = await window.electronAPI.getLinkedTask(this.assetToEdit.id)
@@ -423,34 +439,36 @@ export default {
           this.existingLinkedTask = res.data
           // Instead of fetching all the nested tasks, we'll hit the task API to get the name
           if (window.electronAPI.getTask) {
-             const taskRes = await window.electronAPI.getTask(res.data.taskId)
-             if (taskRes.success && taskRes.data) {
-                this.existingLinkedTaskData = taskRes.data
-                this.existingLinkedTaskName = `${taskRes.data.assetName} - ${taskRes.data.taskType}`
-             }
+            const taskRes = await window.electronAPI.getTask(res.data.taskId)
+            if (taskRes.success && taskRes.data) {
+              this.existingLinkedTaskData = taskRes.data
+              this.existingLinkedTaskName = `${taskRes.data.assetName} - ${taskRes.data.taskType}`
+            }
           } else {
-             this.existingLinkedTaskName = res.data.taskId
+            this.existingLinkedTaskName = res.data.taskId
           }
         }
       } catch (err) {
-        console.error("Error fetching linked task for EditAssetModal", err)
+        console.error('Error fetching linked task for EditAssetModal', err)
       }
     },
-    
+
     async deleteExistingLink() {
       if (!this.existingLinkedTask) return
       if (!window.electronAPI || !window.electronAPI.deleteLinkedAsset) return
-      
+
       try {
-        const res = await window.electronAPI.deleteLinkedAsset(this.existingLinkedTask.assetId)
+        const res = await window.electronAPI.deleteLinkedAsset(
+          this.existingLinkedTask.assetId
+        )
         if (res.success) {
           this.existingLinkedTask = null
           this.existingLinkedTaskName = ''
         } else {
-          console.error("Failed to delete link", res.error)
+          console.error('Failed to delete link', res.error)
         }
       } catch (err) {
-        console.error("Failed to delete link", err)
+        console.error('Failed to delete link', err)
       }
     }
   },
@@ -495,7 +513,9 @@ export default {
 
       this.isLoadingLinkedAssets = true
       try {
-        const prod = this.openProductions.find(p => p.id === this.linkedProductionId)
+        const prod = this.openProductions.find(
+          p => p.id === this.linkedProductionId
+        )
         if (prod) {
           const assets = await assetsApi.getAssets(prod, null, true)
           this.linkedAssetsList = assets

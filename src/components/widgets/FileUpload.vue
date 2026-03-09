@@ -6,10 +6,7 @@
     @dragleave="onDragleave"
   >
     <form enctype="multipart/form-data" novalidate>
-      <div 
-        class="dropbox" 
-        :class="{ 'is-dragging': isDragging }"
-      >
+      <div class="dropbox" :class="{ 'is-dragging': isDragging }">
         <label
           :class="{
             button: true,
@@ -207,4 +204,3 @@ export default {
   word-break: break-all;
 }
 </style>
-

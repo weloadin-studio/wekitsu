@@ -10,7 +10,11 @@
             </h3>
           </div>
           <div class="column is-narrow has-text-right">
-            <button class="button is-danger" @click="confirmBulkUnlink" :disabled="isLoading || selectedTasks.length === 0">
+            <button
+              class="button is-danger"
+              @click="confirmBulkUnlink"
+              :disabled="isLoading || selectedTasks.length === 0"
+            >
               Unlink Selected ({{ selectedTasks.length }})
             </button>
           </div>
@@ -20,8 +24,15 @@
           <table class="datatable is-fullwidth">
             <thead class="datatable-head">
               <tr>
-                <th class="datatable-row-header" style="width: 40px; text-align: center;">
-                  <input type="checkbox" :checked="isAllSelected" @change="toggleAllSelection" />
+                <th
+                  class="datatable-row-header"
+                  style="width: 40px; text-align: center"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    @change="toggleAllSelection"
+                  />
                 </th>
                 <th class="datatable-row-header">Asset</th>
                 <th class="datatable-row-header">Task</th>
@@ -30,22 +41,44 @@
               </tr>
             </thead>
             <tbody class="datatable-body">
-              <tr v-for="task in displayTasks" :key="task.id" class="datatable-row">
-                <td style="text-align: center;">
-                  <input type="checkbox" :value="task.id" v-model="selectedTasks" />
+              <tr
+                v-for="task in displayTasks"
+                :key="task.id"
+                class="datatable-row"
+              >
+                <td style="text-align: center">
+                  <input
+                    type="checkbox"
+                    :value="task.id"
+                    v-model="selectedTasks"
+                  />
                 </td>
                 <td>
-                  <router-link :to="getAssetRoute(task)" @click="$emit('cancel')">
+                  <router-link
+                    :to="getAssetRoute(task)"
+                    @click="$emit('cancel')"
+                  >
                     {{ task.entity_name }}
                   </router-link>
                 </td>
                 <td>{{ task.name }}</td>
                 <td>{{ task.localPath }}</td>
-                <td class="action flexrow" style="justify-content: center; gap: 0.5rem">
-                  <button class="button icon-button" title="Open Folder" @click="openFolder(task.localPath)">
+                <td
+                  class="action flexrow"
+                  style="justify-content: center; gap: 0.5rem"
+                >
+                  <button
+                    class="button icon-button"
+                    title="Open Folder"
+                    @click="openFolder(task.localPath)"
+                  >
                     <icon-folder-open class="icon is-small" size="16" />
                   </button>
-                  <button class="button icon-button is-danger" title="Unlink" @click="confirmUnlink(task)">
+                  <button
+                    class="button icon-button is-danger"
+                    title="Unlink"
+                    @click="confirmUnlink(task)"
+                  >
                     <icon-unlink class="icon is-small" size="16" />
                   </button>
                 </td>
@@ -71,12 +104,12 @@
         </div>
       </div>
     </div>
-    
+
     <confirm-modal
       :active="showConfirm"
       :text="confirmText"
-      :confirmButtonText="confirmButtonText"
-      :isLoading="isActionLoading"
+      :confirm-button-text="confirmButtonText"
+      :is-loading="isActionLoading"
       @cancel="cancelAction"
       @confirm="performAction"
     />
@@ -86,7 +119,10 @@
 <script>
 import { modalMixin } from '@/components/modals/base_modal'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
-import { Unlink as IconUnlink, FolderOpen as IconFolderOpen } from 'lucide-vue-next'
+import {
+  Unlink as IconUnlink,
+  FolderOpen as IconFolderOpen
+} from 'lucide-vue-next'
 
 export default {
   name: 'linked-tasks-modal',
@@ -108,7 +144,7 @@ export default {
       tasks: [],
       selectedTasks: [],
       isLoading: false,
-      
+
       showConfirm: false,
       confirmText: '',
       confirmButtonText: '',
@@ -118,75 +154,78 @@ export default {
   },
   computed: {
     displayTasks() {
-      return this.tasks;
+      return this.tasks
     },
     isAllSelected() {
-      return this.tasks.length > 0 && this.selectedTasks.length === this.tasks.length;
+      return (
+        this.tasks.length > 0 && this.selectedTasks.length === this.tasks.length
+      )
     }
   },
   methods: {
     toggleAllSelection(event) {
       if (event.target.checked) {
-        this.selectedTasks = this.tasks.map(t => t.id);
+        this.selectedTasks = this.tasks.map(t => t.id)
       } else {
-        this.selectedTasks = [];
+        this.selectedTasks = []
       }
     },
-    
+
     getAssetRoute(task) {
-      if (!task || !task.project_id || !task.entity_id) return '';
-      return `/productions/${task.project_id}/assets/${task.entity_id}`;
+      if (!task || !task.project_id || !task.entity_id) return ''
+      return `/productions/${task.project_id}/assets/${task.entity_id}`
     },
 
     openFolder(path) {
       if (window.electronAPI && window.electronAPI.openExplorer) {
-        window.electronAPI.openExplorer(path);
+        window.electronAPI.openExplorer(path)
       }
     },
 
     async loadTasks() {
-      if (!window.electronAPI || !window.electronAPI.getLinkedWorkspaceTasks) return;
-      this.isLoading = true;
+      if (!window.electronAPI || !window.electronAPI.getLinkedWorkspaceTasks)
+        return
+      this.isLoading = true
       try {
-        const linkedMap = await window.electronAPI.getLinkedWorkspaceTasks();
-        const taskIds = Object.keys(linkedMap);
-        
-        let loadedTasks = [];
+        const linkedMap = await window.electronAPI.getLinkedWorkspaceTasks()
+        const taskIds = Object.keys(linkedMap)
+
+        const loadedTasks = []
         for (const taskId of taskIds) {
           try {
-            const res = await window.electronAPI.getTask(taskId);
+            const res = await window.electronAPI.getTask(taskId)
             if (res && res.success && res.data) {
-                loadedTasks.push({
-                   id: taskId,
-                   name: res.data.taskType || res.data.name || 'Unknown Task',
-                   entity_name: res.data.assetName || 'Unknown Entity',
-                   project_id: res.data.projectId,
-                   entity_id: res.data.entityId,
-                   localPath: linkedMap[taskId],
-                   ...res.data
-                });
+              loadedTasks.push({
+                id: taskId,
+                name: res.data.taskType || res.data.name || 'Unknown Task',
+                entity_name: res.data.assetName || 'Unknown Entity',
+                project_id: res.data.projectId,
+                entity_id: res.data.entityId,
+                localPath: linkedMap[taskId],
+                ...res.data
+              })
             } else {
-                loadedTasks.push({
-                   id: taskId,
-                   name: 'Unknown',
-                   entity_name: 'Deleted / Not Found',
-                   localPath: linkedMap[taskId]
-                });
+              loadedTasks.push({
+                id: taskId,
+                name: 'Unknown',
+                entity_name: 'Deleted / Not Found',
+                localPath: linkedMap[taskId]
+              })
             }
-          } catch(e) {
-             loadedTasks.push({
-               id: taskId,
-               name: 'Unknown',
-               entity_name: 'Error Fetching',
-               localPath: linkedMap[taskId]
-             });
+          } catch (e) {
+            loadedTasks.push({
+              id: taskId,
+              name: 'Unknown',
+              entity_name: 'Error Fetching',
+              localPath: linkedMap[taskId]
+            })
           }
         }
-        this.tasks = loadedTasks;
+        this.tasks = loadedTasks
       } catch (e) {
-        console.error("Failed to load linked tasks", e);
+        console.error('Failed to load linked tasks', e)
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     },
 
@@ -198,7 +237,7 @@ export default {
     },
 
     confirmBulkUnlink() {
-      if (this.selectedTasks.length === 0) return;
+      if (this.selectedTasks.length === 0) return
       this.pendingAction = { type: 'bulk' }
       this.confirmText = `Are you sure you want to unlink the ${this.selectedTasks.length} selected tasks and delete their local workspace folders?`
       this.confirmButtonText = 'Unlink Selected'
@@ -212,36 +251,41 @@ export default {
     },
 
     async performAction() {
-      if (!this.pendingAction) return;
-      this.isActionLoading = true;
-      
+      if (!this.pendingAction) return
+      this.isActionLoading = true
+
       try {
         if (this.pendingAction.type === 'single') {
-           const { task } = this.pendingAction;
-           await window.electronAPI.unlinkFromWorkspace(task.id, task.localPath);
+          const { task } = this.pendingAction
+          await window.electronAPI.unlinkFromWorkspace(task.id, task.localPath)
         } else if (this.pendingAction.type === 'bulk') {
-           const tasksToUnlink = this.tasks.filter(t => this.selectedTasks.includes(t.id));
-           for (const task of tasksToUnlink) {
-              await window.electronAPI.unlinkFromWorkspace(task.id, task.localPath);
-           }
+          const tasksToUnlink = this.tasks.filter(t =>
+            this.selectedTasks.includes(t.id)
+          )
+          for (const task of tasksToUnlink) {
+            await window.electronAPI.unlinkFromWorkspace(
+              task.id,
+              task.localPath
+            )
+          }
         }
-        this.showConfirm = false;
-        this.pendingAction = null;
-        this.selectedTasks = []; // clear selection after deletion
-        await this.loadTasks(); // refresh
+        this.showConfirm = false
+        this.pendingAction = null
+        this.selectedTasks = [] // clear selection after deletion
+        await this.loadTasks() // refresh
       } catch (e) {
-        console.error("Failed to unlink", e);
+        console.error('Failed to unlink', e)
       } finally {
-        this.isActionLoading = false;
+        this.isActionLoading = false
       }
     }
   },
   watch: {
     active(newVal) {
       if (newVal) {
-        this.tasks = [];
-        this.selectedTasks = [];
-        this.loadTasks();
+        this.tasks = []
+        this.selectedTasks = []
+        this.loadTasks()
       }
     }
   }
@@ -265,12 +309,12 @@ export default {
 .datatable-head th {
   position: sticky;
   top: 0;
-  background: rgb(73, 73, 73); 
+  background: rgb(73, 73, 73);
   z-index: 10;
   box-shadow: 0 0px 0 #1b1b1b;
 }
 :global(.dark) .datatable-head th {
-  background: #2f3136; 
+  background: #2f3136;
   color: #444444;
   box-shadow: 0 0px 0 #1b1b1b;
 }
