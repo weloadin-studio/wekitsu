@@ -60,20 +60,20 @@
             </button>
           </div>
           <div class="flexrow mt1" v-if="!existingLinkedTask">
-            <combobox
+            <combobox-searchable
               class="flexrow-item"
               label="Linked Production"
               :options="linkedProductionOptions"
               v-model="linkedProductionId"
             />
-            <combobox
+            <combobox-searchable
               class="flexrow-item"
               label="Linked Asset"
               :options="linkedAssetOptions"
               v-model="linkedAssetId"
               :is-loading="isLoadingLinkedAssets"
             />
-            <combobox
+            <combobox-searchable
               class="flexrow-item"
               label="Linked Task Type"
               :options="linkedTaskTypeOptions"
@@ -168,6 +168,7 @@ import assetsApi from '@/store/api/assets'
 
 import Combobox from '@/components/widgets/Combobox.vue'
 import ComboboxBoolean from '@/components/widgets/ComboboxBoolean.vue'
+import ComboboxSearchable from '@/components/widgets/ComboboxSearchable.vue'
 import MetadataField from '@/components/widgets/MetadataField.vue'
 import TextField from '@/components/widgets/TextField.vue'
 import TextareaField from '@/components/widgets/TextareaField.vue'
@@ -180,6 +181,7 @@ export default {
   components: {
     Combobox,
     ComboboxBoolean,
+    ComboboxSearchable,
     MetadataField,
     TextField,
     TextareaField
