@@ -537,6 +537,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.modal-content {
+  width: 800px;
+  max-width: 95vw;
+}
+
 .modal-content .box p.text {
   margin-bottom: 1em;
 }
