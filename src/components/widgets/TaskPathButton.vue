@@ -12,6 +12,23 @@
     </button>
 
     <button
+      v-if="path && workspaceStatus"
+      class="button icon-button"
+      title="Open Source Folder"
+      @click.stop="openFileExplorer('source')"
+    >
+      <span style="font-weight: bold; font-size: 14px; width: 16px; text-align: center;">S</span>
+    </button>
+    <button
+      v-if="path && workspaceStatus"
+      class="button icon-button"
+      title="Open Export Folder"
+      @click.stop="openFileExplorer('exports')"
+    >
+      <span style="font-weight: bold; font-size: 14px; width: 16px; text-align: center;">E</span>
+    </button>
+
+    <button
       class="button icon-button"
       :class="{ 'is-loading': loading }"
       :title="path ? 'Open Folder' : 'Create Folder'"
@@ -256,6 +273,11 @@ export default {
         console.error('Failed to toggle workspace link:', err)
       } finally {
         this.loading = false
+      }
+    },
+    openFileExplorer(type) {
+      if (window.electronAPI && window.electronAPI.openFileExplorer) {
+        window.electronAPI.openFileExplorer(this.path, type)
       }
     }
   }
