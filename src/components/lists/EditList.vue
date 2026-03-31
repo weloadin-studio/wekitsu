@@ -257,9 +257,13 @@
                     tabindex="-1"
                     :title="edit.full_name"
                     :to="editPath(edit.id)"
+                    v-if="!isCurrentUserClient"
                   >
                     {{ edit.name }}
                   </router-link>
+                  <template v-else>
+                    {{ edit.name }}
+                  </template>
                 </div>
               </th>
 
@@ -672,33 +676,6 @@ export default {
       return !this.isLoading && !this.isError && this.displayedEditsCount > 0
     },
 
-    visibleColumns() {
-      let count = 2
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEditDescription
-          ? 1
-          : 0
-      count += this.visibleMetadataDescriptors.length
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEditTime &&
-        this.metadataDisplayHeaders.timeSpent
-          ? 1
-          : 0
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEditEstimation &&
-        this.metadataDisplayHeaders.estimation
-          ? 1
-          : 0
-      count += this.displayedValidationColumns.length
-      return count
-    },
-
     displayedValidationColumns() {
       return this.validationColumns.filter(columnId => {
         return (
@@ -960,10 +937,6 @@ span.thumbnail-empty {
   padding: 6px;
 }
 
-.datatable-row-header {
-  cursor: pointer;
-}
-
 .dark {
   th .input-editor,
   td .select select,
@@ -1073,7 +1046,7 @@ td .select {
 }
 
 .metadata-value {
-  padding: 0.8rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .resolution {

@@ -251,9 +251,13 @@
                     tabindex="-1"
                     :title="episode.name"
                     :to="episodePath(episode.id)"
+                    v-if="!isCurrentUserClient"
                   >
                     {{ episode.name }}
                   </router-link>
+                  <template v-else>
+                    {{ episode.name }}
+                  </template>
                 </div>
               </th>
 
@@ -687,33 +691,6 @@ export default {
       )
     },
 
-    visibleColumns() {
-      let count = 2
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEpisodeDescription
-          ? 1
-          : 0
-      count += this.visibleMetadataDescriptors.length
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEpisodeTime &&
-        this.metadataDisplayHeaders.timeSpent
-          ? 1
-          : 0
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isEpisodeEstimation &&
-        this.metadataDisplayHeaders.estimation
-          ? 1
-          : 0
-      count += this.displayedValidationColumns.length
-      return count
-    },
-
     displayedValidationColumns() {
       return this.validationColumns.filter(columnId => {
         return (
@@ -885,10 +862,6 @@ span.thumbnail-empty {
   padding: 6px;
 }
 
-.datatable-row-header {
-  cursor: pointer;
-}
-
 th .input-editor,
 td .input-editor {
   color: $grey-strong;
@@ -979,7 +952,7 @@ td .select {
 }
 
 .metadata-value {
-  padding: 0.8rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .resolution {

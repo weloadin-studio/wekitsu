@@ -89,6 +89,7 @@
           <text-field
             ref="nameField"
             :label="$t('assets.fields.name')"
+            :maxlength="160"
             v-model.trim="form.name"
             @enter="runConfirmation"
             v-focus
@@ -103,7 +104,8 @@
           <text-field
             ref="resolutionField"
             :label="$t('shots.fields.resolution')"
-            v-model="form.data.resolution"
+            :placeholder="currentProduction.resolution"
+            v-model.trim="form.data.resolution"
             @enter="runConfirmation"
           />
           <template v-if="assetToEdit">

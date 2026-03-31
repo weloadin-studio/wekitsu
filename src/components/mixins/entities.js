@@ -41,9 +41,10 @@ export const entitiesMixin = {
     }
     this.onSelectedDepartmentChanged()
 
-    this.displaySettings =
-      preferences.getObjectPreference(`${this.type}s:display_settings`) ||
-      this.displaySettings
+    this.displaySettings = {
+      ...this.displaySettings,
+      ...preferences.getObjectPreference(`${this.type}s:display_settings`)
+    }
   },
 
   computed: {
@@ -134,6 +135,7 @@ export const entitiesMixin = {
       } else {
         this.departmentFilter = [departmentId]
       }
+      this.$store.commit('CLEAR_SELECTED_TASKS')
       preferences.setPreference(`${this.pageName}:department`, departmentId)
     },
 

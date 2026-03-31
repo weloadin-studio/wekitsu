@@ -290,12 +290,9 @@
                     </div>
                   </div>
                   <div class="flexrow ml05">
-                    <emoji-button
-                      class="ml05 flexrow-item"
-                      @select="onSelectEmoji"
-                    />
+                    <emoji-button @select="onSelectEmoji" />
                     <button-simple
-                      class="flexrow-item attachment-button"
+                      class="attachment-button"
                       icon="attach"
                       :title="$t('comments.add_attachment')"
                       @click="modals.addAttachment = true"
@@ -318,7 +315,8 @@
               v-if="
                 comment.text.length > 0 ||
                 comment.previews.length > 0 ||
-                comment.attachment_files.length > 0
+                comment.attachment_files.length > 0 ||
+                comment.checklist?.length > 0
               "
             >
               <button
@@ -1001,7 +999,7 @@ export default {
       deep: true,
       immediate: true,
       handler() {
-        let teamOptions = []
+        let teamOptions
         if (this.isCurrentUserClient) {
           teamOptions = this.team.filter(person =>
             ['admin', 'manager', 'client'].includes(person.role)

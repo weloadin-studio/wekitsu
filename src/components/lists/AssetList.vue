@@ -237,10 +237,10 @@
             :key="'group-' + getGroupKey(group, k, 'asset_type_id')"
             @mousedown="startBrowsing"
             @touchstart="startBrowsing"
-            v-for="(group, k) in displayedAssets"
+            v-for="(group, k) in filteredDisplayedAssets"
           >
             <tr class="datatable-type-header" v-if="group[0]">
-              <th scope="rowgroup" :colspan="visibleColumns">
+              <th scope="rowgroup">
                 <span
                   class="datatable-row-header pointer"
                   @click="$emit('asset-type-clicked', group[0].asset_type_name)"
@@ -290,7 +290,7 @@
                     class="asset-link asset-name flexrow-item"
                     :to="assetPath(asset.id)"
                     :title="asset.full_name"
-                    v-if="!asset.shared"
+                    v-if="!asset.shared && !isCurrentUserClient"
                   >
                     {{ asset.name }}
                   </router-link>
@@ -550,38 +550,10 @@
       <table-info :is-loading="isLoading" :is-error="isError" />
     </div>
 
-    <p class="has-text-centered nb-assets" v-if="!isEmptyList && !isLoading">
-      {{ displayedAssetsLength }}
-      {{ $tc('assets.number', displayedAssetsLength) }}
-      <span
-        v-if="displayedAssetsTimeSpent > 0 || displayedAssetsEstimation > 0"
-      >
-        ({{ formatDuration(displayedAssetsTimeSpent) }}
-        {{
-          isDurationInHours
-            ? $tc(
-                'main.hours_spent',
-                formatDuration(displayedAssetsTimeSpent, false)
-              )
-            : $tc(
-                'main.days_spent',
-                formatDuration(displayedAssetsTimeSpent, false)
-              )
-        }},
-        {{ formatDuration(displayedAssetsEstimation) }}
-        {{
-          isDurationInHours
-            ? $tc(
-                'main.hours_estimated',
-                formatDuration(displayedAssetsEstimation, false)
-              )
-            : $tc(
-                'main.man_days',
-                formatDuration(displayedAssetsEstimation, false)
-              )
-        }})
-      </span>
-    </p>
+    <asset-list-numbers
+      :assets="assetCache.assets"
+      v-if="!isEmptyList && !isLoading"
+    />
   </div>
 </template>
 
@@ -598,6 +570,7 @@ import preferences from '@/lib/preferences'
 import { sortTaskTypes } from '@/lib/sorting'
 import { range } from '@/lib/time'
 
+import AssetListNumbers from '@/components/widgets/AssetListNumbers.vue'
 import ButtonSimple from '@/components/widgets/ButtonSimple.vue'
 import ComboboxTaskType from '@/components/widgets/ComboboxTaskType.vue'
 import DescriptionCell from '@/components/cells/DescriptionCell.vue'
@@ -612,6 +585,7 @@ import TableMetadataSelectorMenu from '@/components/widgets/TableMetadataSelecto
 import ValidationCell from '@/components/cells/ValidationCell.vue'
 import ValidationHeader from '@/components/cells/ValidationHeader.vue'
 
+import assetStore from '@/store/modules/assets'
 import assetTypeStore from '@/store/modules/assettypes'
 import episodeStore from '@/store/modules/episodes'
 import taskTypeStore from '@/store/modules/tasktypes'
@@ -628,6 +602,7 @@ export default {
   ],
 
   components: {
+    AssetListNumbers,
     ButtonSimple,
     ComboboxTaskType,
     DescriptionCell,
@@ -728,9 +703,6 @@ export default {
       'currentEpisode',
       'currentProduction',
       'displayedAssetsCount',
-      'displayedAssetsLength',
-      'displayedAssetsTimeSpent',
-      'displayedAssetsEstimation',
       'nbSelectedTasks',
       'organisation',
       'isAssetDescription',
@@ -749,6 +721,10 @@ export default {
       'taskMap',
       'user'
     ]),
+
+    assetCache() {
+      return assetStore.cache
+    },
 
     assetTypeMap() {
       return assetTypeStore.cache.assetTypeMap
@@ -782,34 +758,6 @@ export default {
 
     isListVisible() {
       return !this.isLoading && !this.isError && this.displayedAssetsCount > 0
-    },
-
-    visibleColumns() {
-      let count = 1
-      count += this.isTVShow ? 1 : 0
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isAssetDescription
-          ? 1
-          : 0
-      count += this.visibleMetadataDescriptors.length
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isAssetTime &&
-        this.metadataDisplayHeaders.timeSpent
-          ? 1
-          : 0
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isAssetEstimation &&
-        this.metadataDisplayHeaders.estimation
-          ? 1
-          : 0
-      count += this.displayedValidationColumns.length
-      return count
     },
 
     displayedValidationColumns() {
@@ -846,6 +794,33 @@ export default {
 
     formatDurationInHours() {
       return this.organisation.format_duration_in_hours
+    },
+
+    /** Filter the displayed assets by the display settings */
+    filteredDisplayedAssets() {
+      if (
+        this.displaySettings.showSharedAssets &&
+        this.displaySettings.showLinkedAssets
+      ) {
+        return this.displayedAssets
+      }
+      const episodeId = this.currentEpisode?.id
+
+      return this.displayedAssets.map(typeList =>
+        typeList.filter(asset => {
+          if (!this.displaySettings.showSharedAssets && asset.shared) {
+            return false
+          }
+          if (
+            this.isTVShow &&
+            !this.displaySettings.showLinkedAssets &&
+            !['all', asset.episode_id || 'main'].includes(episodeId)
+          ) {
+            return false
+          }
+          return true
+        })
+      )
     }
   },
 
@@ -1212,5 +1187,9 @@ td.metadata-descriptor {
   height: 3.1rem;
   max-width: 120px;
   padding: 0;
+}
+
+.metadata-value {
+  padding: 0.5rem 0.75rem;
 }
 </style>

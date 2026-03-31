@@ -290,9 +290,9 @@
             v-for="(group, k) in displayedShots"
           >
             <tr class="datatable-type-header">
-              <th scope="rowgroup" :colspan="visibleColumns">
+              <th scope="rowgroup">
                 <div
-                  class="datatable-row-header"
+                  class="datatable-row-header pointer"
                   @click="$emit('sequence-clicked', group[0].sequence_name)"
                 >
                   {{ group[0] ? group[0].sequence_name : '' }}
@@ -333,9 +333,13 @@
                     tabindex="-1"
                     :title="shot.full_name"
                     :to="shotPath(shot.id)"
+                    v-if="!isCurrentUserClient"
                   >
                     {{ shot.name }}
                   </router-link>
+                  <template v-else>
+                    {{ shot.name }}
+                  </template>
                 </div>
               </th>
 
@@ -435,9 +439,21 @@
               </td>
 
               <td
+                class="drawings number-cell"
+                v-if="
+                  displaySettings.showInfos &&
+                  isPaperProduction &&
+                  metadataDisplayHeaders.drawings
+                "
+              >
+                {{ shot.nb_drawings }}
+              </td>
+
+              <td
                 class="frames number-cell"
                 v-if="
                   isFrames &&
+                  !isPaperProduction &&
                   displaySettings.showInfos &&
                   metadataDisplayHeaders.frames
                 "
@@ -462,19 +478,7 @@
               </td>
 
               <td
-                class="drawings number-cell"
-                v-if="
-                  displaySettings.showInfos &&
-                  isPaperProduction &&
-                  metadataDisplayHeaders.drawings
-                "
-              >
-                {{ shot.nb_drawings }}
-              </td>
-
-              <td
                 class="framein number-cell"
-                :class="{ 'timecode-cell': displaySettings.inOutTimecode }"
                 v-if="
                   isFrameIn &&
                   displaySettings.showInfos &&
@@ -1010,75 +1014,6 @@ export default {
       return !this.isLoading && !this.isError && this.displayedShotsCount > 0
     },
 
-    visibleColumns() {
-      let count = 2
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isShotDescription
-          ? 1
-          : 0
-      count += this.visibleMetadataDescriptors.length
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isShotTime &&
-        this.metadataDisplayHeaders.timeSpent
-          ? 1
-          : 0
-      count +=
-        !this.isCurrentUserClient &&
-        this.displaySettings.showInfos &&
-        this.isShotEstimation &&
-        this.metadataDisplayHeaders.estimation
-          ? 1
-          : 0
-
-      if (this.isPaperProduction) {
-        count +=
-          this.displaySettings.showInfos && this.metadataDisplayHeaders.drawings
-            ? 1
-            : 0
-      } else {
-        count +=
-          this.displaySettings.showInfos && this.metadataDisplayHeaders.frames
-            ? 1
-            : 0
-      }
-      count +=
-        this.displaySettings.showInfos &&
-        this.isFrameIn &&
-        this.metadataDisplayHeaders.frameIn
-          ? 1
-          : 0
-      count +=
-        this.displaySettings.showInfos &&
-        this.isFrameOut &&
-        this.metadataDisplayHeaders.frameOut
-          ? 1
-          : 0
-      count +=
-        this.displaySettings.showInfos &&
-        this.isFps &&
-        this.metadataDisplayHeaders.fps
-          ? 1
-          : 0
-      count +=
-        this.displaySettings.showInfos &&
-        this.isResolution &&
-        this.metadataDisplayHeaders.resolution
-          ? 1
-          : 0
-      count +=
-        this.displaySettings.showInfos &&
-        this.isMaxRetakes &&
-        this.metadataDisplayHeaders.max_retakes
-          ? 1
-          : 0
-      count += this.displayedValidationColumns.length
-      return count
-    },
-
     displayedValidationColumns() {
       return this.validationColumns.filter(columnId => {
         return (
@@ -1204,12 +1139,9 @@ export default {
     },
 
     onNbFramesChanged(entry, value) {
-      let shotsToChange = []
-      if (this.selectedShots.has(entry.id)) {
-        shotsToChange = this.selectedShots
-      } else {
-        shotsToChange = [entry]
-      }
+      const shotsToChange = this.selectedShots.has(entry.id)
+        ? this.selectedShots
+        : [entry]
 
       const cleanValue = this.sanitizeIntegerLight(value)
 
@@ -1356,9 +1288,9 @@ th.actions {
 }
 
 .fps {
-  min-width: 60px;
-  max-width: 60px;
-  width: 60px;
+  min-width: 70px;
+  max-width: 70px;
+  width: 70px;
 }
 
 .resolution {
@@ -1404,13 +1336,6 @@ th.actions {
   width: 70px;
 }
 
-.timecode-cell {
-  min-width: 95px;
-  max-width: 95px;
-  width: 95px;
-  padding: 10px;
-}
-
 td.name {
   font-size: 1.2em;
 }
@@ -1439,10 +1364,6 @@ span.thumbnail-empty {
   padding: 6px;
 }
 
-.datatable-row-header {
-  cursor: pointer;
-}
-
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -1461,7 +1382,7 @@ td.metadata-descriptor {
   padding: 0;
 }
 
-.datatable .datatable-row td.number-cell {
-  padding-right: 0.75rem;
+.metadata-value {
+  padding: 0.5rem 0.75rem;
 }
 </style>

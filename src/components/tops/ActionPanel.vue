@@ -293,7 +293,12 @@
           class="menu-item"
           :title="$t('main.csv.export_file')"
           @click="$emit('export-task')"
-          v-if="isTaskSelection && !isEntitySelection && nbSelectedTasks === 1"
+          v-if="
+            isTaskSelection &&
+            !isEntitySelection &&
+            nbSelectedTasks === 1 &&
+            !isCurrentUserClient
+          "
         >
           <kitsu-icon name="export" :title="$t('main.csv.export_file')" />
         </div>
@@ -390,6 +395,14 @@
             >
               {{ $t('tasks.assignation_disclaimer') }}
             </router-link>
+          </div>
+          <div
+            class="flexrow-item mb05 assignation-error"
+            v-if="errors.taskAssignation"
+          >
+            <p class="is-danger has-text-centered">
+              {{ $t('tasks.assignation_error') }}
+            </p>
           </div>
           <div
             class="flexrow-item is-wide flexrow"
@@ -943,6 +956,7 @@ export default {
       },
       errors: {
         assetDeletion: false,
+        taskAssignation: false,
         taskDeletion: false,
         conceptDeletion: false,
         editDeletion: false,
@@ -966,6 +980,7 @@ export default {
       'currentProduction',
       'getCustomActionsByType',
       'isCurrentUserArtist',
+      'isCurrentUserClient',
       'isCurrentUserManager',
       'isCurrentUserSupervisor',
       'isShowAssignations',
@@ -1315,10 +1330,12 @@ export default {
             ? this.selectedPersonId
             : this.user.id
         this.loading.assignation = true
+        this.errors.taskAssignation = false
         try {
           await this.assignSelectedTasks({ personId })
           this.$refs['assignation-field']?.clear()
         } catch (err) {
+          this.errors.taskAssignation = true
           console.error(err)
         } finally {
           this.loading.assignation = false
@@ -1788,6 +1805,10 @@ export default {
   background: #fcfcff;
   overflow-x: auto;
   overflow-y: hidden;
+}
+.is-danger {
+  color: #ff3860;
+  font-style: italic;
 }
 
 .menu-item {

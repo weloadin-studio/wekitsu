@@ -202,7 +202,12 @@
         </li>
         <li>
           <a href="https://cgwire.canny.io" target="_blank">
-            Roadmap / Feedback
+            {{ $t('main.feedback') }}
+          </a>
+        </li>
+        <li>
+          <a href="https://dev.kitsu.cloud" target="_blank">
+            {{ $t('main.developer_documentation') }}
           </a>
         </li>
         <hr />
@@ -1029,46 +1034,6 @@ export default {
 
 .notification-bell {
   margin-top: 9px;
-}
-
-.kitsu-summit-button {
-  align-items: center;
-  display: flex;
-  border: 2px solid transparent;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin: 8px;
-  text-transform: uppercase;
-
-  padding: 6px 16px;
-  position: relative;
-  transition: transform 0.2s ease;
-  z-index: 1;
-
-  &::before {
-    background: linear-gradient(135deg, #95ead0, #82d1b2, #6cb896);
-    border-radius: 20px;
-    content: '';
-    inset: -2px;
-    padding: 2px;
-    pointer-events: none;
-    position: absolute;
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    z-index: -1;
-    mask-composite: exclude;
-
-    .dark & {
-      background: linear-gradient(135deg, #41b883, #31855e, #1e5f3c);
-    }
-  }
-
-  &:hover {
-    transform: translateY(-3px);
-  }
 }
 
 @media screen and (max-width: 768px) {

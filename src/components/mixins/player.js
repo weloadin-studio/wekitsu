@@ -220,11 +220,10 @@ export const playerMixin = {
           annotations: this.currentEntity.preview_file_annotations || [],
           duration: this.currentEntity.preview_file_duration || 0
         }
-      } else {
-        return this.currentEntity.preview_file_previews[
-          this.currentPreviewIndex - 1
-        ]
       }
+      return this.currentEntity.preview_file_previews?.[
+        this.currentPreviewIndex - 1
+      ]
     },
 
     currentEntityPreviewLength() {
@@ -232,17 +231,6 @@ export const playerMixin = {
         return 0
       }
       return this.currentEntity.preview_file_previews.length + 1
-    },
-
-    isFullScreenEnabled() {
-      return !!(
-        document.fullscreenEnabled ||
-        document.mozFullScreenEnabled ||
-        document.msFullscreenEnabled ||
-        document.webkitSupportsFullscreen ||
-        document.webkitFullscreenEnabled ||
-        document.createElement('video').webkitRequestFullScreen
-      )
     },
 
     // Frames
@@ -328,17 +316,7 @@ export const playerMixin = {
           false
         )
         this.container.addEventListener(
-          'mozfullscreenchange',
-          this.onFullScreenChange,
-          false
-        )
-        this.container.addEventListener(
-          'MSFullscreenChange',
-          this.onFullScreenChange,
-          false
-        )
-        this.container.addEventListener(
-          'webkitfullscreenchange',
+          'webkitfullscreenchange', // Safari < 16.4
           this.onFullScreenChange,
           false
         )
@@ -358,17 +336,7 @@ export const playerMixin = {
           false
         )
         this.container.removeEventListener(
-          'mozfullscreenchange',
-          this.onFullScreenChange,
-          false
-        )
-        this.container.removeEventListener(
-          'MSFullscreenChange',
-          this.onFullScreenChange,
-          false
-        )
-        this.container.removeEventListener(
-          'webkitfullscreenchange',
+          'webkitfullscreenchange', // Safari < 16.4
           this.onFullScreenChange,
           false
         )
@@ -690,49 +658,29 @@ export const playerMixin = {
     },
 
     setFullScreen() {
-      if (this.container.requestFullscreen) {
-        this.container.requestFullscreen()
-      } else if (this.container.mozRequestFullScreen) {
-        this.container.mozRequestFullScreen()
-      } else if (this.container.webkitRequestFullScreen) {
-        this.container.webkitRequestFullScreen()
-      } else if (this.container.msRequestFullscreen) {
-        this.container.msRequestFullscreen()
-      }
-      this.container.setAttribute('data-fullscreen', !!true)
-      document.activeElement.blur()
-      this.fullScreen = true
+      this.documentSetFullScreen(this.container)
+        .then(() => {
+          this.container.setAttribute('data-fullscreen', true)
+          document.activeElement.blur()
+          this.fullScreen = true
+        })
+        .catch(console.error)
     },
 
     exitFullScreen() {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen()
-      } else if (document.webkitCancelFullScreen) {
-        document.webkitCancelFullScreen()
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen()
-      }
-      this.container.setAttribute('data-fullscreen', !!false)
-      document.activeElement.blur()
-      this.fullScreen = false
+      this.documentExitFullScreen()
+        .then(() => {
+          this.container.setAttribute('data-fullscreen', false)
+          document.activeElement.blur()
+          this.fullScreen = false
+        })
+        .catch(console.error)
       setTimeout(() => {
         this.triggerResize()
       }, 200)
       setTimeout(() => {
         this.triggerResize()
       }, 500)
-    },
-
-    isFullScreen() {
-      return !!(
-        document.fullscreen ||
-        document.webkitIsFullScreen ||
-        document.mozFullScreen ||
-        document.msFullscreenElement ||
-        document.fullscreenElement
-      )
     },
 
     onScrubStart() {
@@ -1292,8 +1240,8 @@ export const playerMixin = {
             // Init canvas values
             let width = ratio ? fullHeight * ratio : fullWidth
             let height = ratio ? Math.round(fullWidth / ratio) : fullHeight
-            let top = 0
-            let left = 0
+            let top
+            let left
             this.canvas.style.top = '0px'
             this.canvas.style.left = '0px'
 
