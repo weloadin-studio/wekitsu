@@ -607,14 +607,16 @@ const actions = {
 
   deleteAsset({ commit, state }, asset) {
     if (window.electronAPI && window.electronAPI.deleteAssetFiles) {
-      window.electronAPI.deleteAssetFiles({
-        assetId: asset.id,
-        projectName: asset.project_name,
-        assetType: asset.asset_type_name,
-        assetName: asset.name
-      }).catch(err => {
-        console.error('Failed to delete asset files from Wekitsu API', err)
-      })
+      window.electronAPI
+        .deleteAssetFiles({
+          assetId: asset.id,
+          projectName: asset.project_name,
+          assetType: asset.asset_type_name,
+          assetName: asset.name
+        })
+        .catch(err => {
+          console.error('Failed to delete asset files from Wekitsu API', err)
+        })
     }
 
     return assetsApi.deleteAsset(asset).then(() => {

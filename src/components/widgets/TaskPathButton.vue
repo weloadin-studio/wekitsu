@@ -17,7 +17,15 @@
       title="Open Source Folder"
       @click.stop="openFileExplorer('source')"
     >
-      <span style="font-weight: bold; font-size: 14px; width: 16px; text-align: center;">S</span>
+      <span
+        style="
+          font-weight: bold;
+          font-size: 14px;
+          width: 16px;
+          text-align: center;
+        "
+        >S</span
+      >
     </button>
     <button
       v-if="path && workspaceStatus"
@@ -25,7 +33,15 @@
       title="Open Export Folder"
       @click.stop="openFileExplorer('exports')"
     >
-      <span style="font-weight: bold; font-size: 14px; width: 16px; text-align: center;">E</span>
+      <span
+        style="
+          font-weight: bold;
+          font-size: 14px;
+          width: 16px;
+          text-align: center;
+        "
+        >E</span
+      >
     </button>
 
     <button
